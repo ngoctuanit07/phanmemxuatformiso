@@ -47,7 +47,6 @@ export default function Navbar() {
         <Link href="/" className="navbar-brand d-flex align-items-center gap-2 fw-bold text-white fs-5">
           <i className="bi bi-file-earmark-word-fill text-warning fs-4"></i>
           <span>XUẤT FORM ISO & IN ẤN</span>
-          <span className="badge bg-light text-primary fs-7 ms-1 fw-semibold">Next.js + Bootstrap</span>
         </Link>
 
         <button
