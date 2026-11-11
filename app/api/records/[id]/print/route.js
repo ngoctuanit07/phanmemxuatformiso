@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { query, queryOne } from '@/lib/db';
 import { getCurrentUser, hasPermission } from '@/lib/auth';
-import { fillDocxTemplate, convertDocxToHtml } from '@/lib/docx-engine';
+import { renderRecordHtml } from '@/lib/docx-engine';
 import { generatePdfFromHtml } from '@/lib/pdf-engine';
 
 export async function GET(request, { params }) {
@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
     const rawHtmlOnly = searchParams.get('raw') === 'true';
 
     const record = await queryOne(
-      `SELECT fr.*, t.file_path, t.file_name, t.file_type, t.name AS template_name
+      `SELECT fr.*, t.file_path, t.file_name, t.file_type, t.name AS template_name, t.code AS template_code
        FROM form_records fr
        INNER JOIN templates t ON fr.template_id = t.id
        WHERE fr.id = ?`,
@@ -57,11 +57,8 @@ export async function GET(request, { params }) {
     const templateBuffer = fs.readFileSync(fullTemplatePath);
     const formData = typeof record.form_data === 'string' ? JSON.parse(record.form_data) : record.form_data;
 
-    // 1. Fill data into Word template
-    const filledDocxBuffer = fillDocxTemplate(templateBuffer, formData);
-
-    // 2. Convert filled document to HTML
-    const html = await convertDocxToHtml(filledDocxBuffer);
+    // Render HTML for printing (uses companion .print.html when present, or Docxtemplater + Mammoth)
+    const html = await renderRecordHtml(fullTemplatePath, templateBuffer, formData, record.template_code);
 
     // If client requested HTML view with auto-print
     if (rawHtmlOnly) {

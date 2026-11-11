@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { queryOne } from '@/lib/db';
 import { getCurrentUser, hasPermission } from '@/lib/auth';
-import { fillDocxTemplate, convertDocxToHtml } from '@/lib/docx-engine';
+import { fillDocxTemplate, renderRecordHtml } from '@/lib/docx-engine';
 
 export async function GET(request, { params }) {
   try {
@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
     const format = searchParams.get('format') || 'docx';
 
     const record = await queryOne(
-      `SELECT fr.*, t.file_path, t.file_name, t.file_type, t.name AS template_name
+      `SELECT fr.*, t.file_path, t.file_name, t.file_type, t.name AS template_name, t.code AS template_code
        FROM form_records fr
        INNER JOIN templates t ON fr.template_id = t.id
        WHERE fr.id = ?`,
@@ -55,11 +55,8 @@ export async function GET(request, { params }) {
     const templateBuffer = fs.readFileSync(fullTemplatePath);
     const formData = typeof record.form_data === 'string' ? JSON.parse(record.form_data) : record.form_data;
 
-    // Fill data into docx template
-    const filledDocxBuffer = fillDocxTemplate(templateBuffer, formData);
-
     if (format === 'html') {
-      const html = await convertDocxToHtml(filledDocxBuffer);
+      const html = await renderRecordHtml(fullTemplatePath, templateBuffer, formData, record.template_code);
       return new NextResponse(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
@@ -67,6 +64,9 @@ export async function GET(request, { params }) {
         }
       });
     }
+
+    // Fill data into docx template
+    const filledDocxBuffer = fillDocxTemplate(templateBuffer, formData, record.template_code);
 
     // Return populated .docx file for download
     const filename = `${record.code}_${record.file_name || 'bieu_mau_da_dien.docx'}`;

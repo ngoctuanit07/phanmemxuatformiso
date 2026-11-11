@@ -5,24 +5,20 @@ import Link from 'next/link';
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
 
-  const fetchTemplates = () => {
+  const fetchTemplates = (searchValue = searchTerm) => {
     setLoading(true);
     let url = `/api/templates?`;
-    if (selectedCategory) url += `category_id=${selectedCategory}&`;
-    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+    if (searchValue) url += `search=${encodeURIComponent(searchValue)}&`;
 
     fetch(url)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           setTemplates(data.templates);
-          setCategories(data.categories || []);
         }
         setLoading(false);
       })
@@ -33,12 +29,12 @@ export default function TemplatesPage() {
   };
 
   useEffect(() => {
-    fetchTemplates();
-  }, [selectedCategory]);
+    fetchTemplates('');
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchTemplates();
+    fetchTemplates(searchTerm);
   };
 
   return (
@@ -64,7 +60,7 @@ export default function TemplatesPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <form onSubmit={handleSearch} className="row g-3">
-            <div className="col-12 col-md-5">
+            <div className="col-12 col-md-9">
               <div className="input-group">
                 <span className="input-group-text bg-white"><i className="bi bi-search text-muted"></i></span>
                 <input
@@ -77,19 +73,6 @@ export default function TemplatesPage() {
               </div>
             </div>
 
-            <div className="col-12 col-md-4">
-              <select
-                className="form-select"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">-- Tất cả nhóm lĩnh vực --</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-
             <div className="col-12 col-md-3 d-flex gap-2">
               <button type="submit" className="btn btn-outline-primary flex-grow-1">
                 Lọc dữ liệu
@@ -97,7 +80,7 @@ export default function TemplatesPage() {
               <button
                 type="button"
                 className="btn btn-outline-secondary"
-                onClick={() => { setSearchTerm(''); setSelectedCategory(''); }}
+                onClick={() => { setSearchTerm(''); fetchTemplates(''); }}
               >
                 Đặt lại
               </button>
@@ -157,10 +140,6 @@ export default function TemplatesPage() {
                       </p>
 
                       <div className="bg-light p-2 rounded small text-muted mb-3">
-                        <div className="d-flex justify-content-between py-1 border-bottom">
-                          <span>Nhóm lĩnh vực:</span>
-                          <span className="fw-semibold text-dark">{tpl.category_name || 'Chung'}</span>
-                        </div>
                         <div className="d-flex justify-content-between py-1 border-bottom">
                           <span>Số trường dữ liệu:</span>
                           <span className="fw-bold text-primary">{fieldsCount} trường</span>

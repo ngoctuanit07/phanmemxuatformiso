@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import FqcTestingForm, { FQC_TEMPLATE_CODES } from '@/components/FqcTestingForm';
 
 function FillFormContent() {
   const searchParams = useSearchParams();
@@ -131,6 +132,13 @@ function FillFormContent() {
     setFormData(prev => ({
       ...prev,
       [fieldName]: value
+    }));
+  };
+
+  const handleBatchChange = (updates) => {
+    setFormData(prev => ({
+      ...prev,
+      ...updates
     }));
   };
 
@@ -395,6 +403,14 @@ function FillFormContent() {
                 </div>
 
                 {/* Render Dynamic Form Fields */}
+                {FQC_TEMPLATE_CODES.has(currentTemplate.code) ? (
+                  <FqcTestingForm
+                    templateCode={currentTemplate.code}
+                    formData={formData}
+                    onChange={handleInputChange}
+                    onBatchChange={handleBatchChange}
+                  />
+                ) : (
                 <div className="row g-3">
                   {Array.isArray(currentTemplate.fields_schema) && currentTemplate.fields_schema.length > 0 ? (
                     currentTemplate.fields_schema.map((field, idx) => {
@@ -471,6 +487,7 @@ function FillFormContent() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </div>
           </div>

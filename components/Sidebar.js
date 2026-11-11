@@ -33,8 +33,6 @@ export default function Sidebar() {
         return hasPerm('record.view') || hasPerm('record.create') || hasPerm('record.print');
       case 'Logs':
         return hasPerm('log.view');
-      case 'Products':
-        return hasPerm('product.view') || hasPerm('product.create');
       case 'Users':
         return hasPerm('user.view') || hasPerm('user.manage');
       case 'Roles':
@@ -122,41 +120,6 @@ export default function Sidebar() {
                   </Link>
                 </li>
               )}
-            </ul>
-          </>
-        )}
-
-        {hasModule('Products') && (
-          <>
-            <div className="nav-header">MODULE SẢN PHẨM</div>
-            <ul className="nav flex-column">
-              <li className="nav-item">
-                <Link href="/products" className={`nav-link ${pathname === '/products' ? 'active' : ''}`}>
-                  <i className="bi bi-box-seam"></i>
-                  <span>Danh Sách Sản Phẩm</span>
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link href="/product-categories" className={`nav-link ${pathname === '/product-categories' ? 'active' : ''}`}>
-                  <i className="bi bi-tags"></i>
-                  <span>Danh Mục Sản Phẩm</span>
-                </Link>
-              </li>
-            </ul>
-          </>
-        )}
-
-        {hasModule('Orders') && (
-          <>
-            <div className="nav-header">MODULE ĐƠN HÀNG</div>
-            <ul className="nav flex-column">
-              <li className="nav-item">
-                <Link href="/orders" className={`nav-link ${pathname === '/orders' ? 'active' : ''}`}>
-                  <i className="bi bi-cart3"></i>
-                  <span>Quản Lý Đơn Hàng</span>
-                  <span className="badge bg-danger-subtle text-danger ms-auto font-monospace" style={{ fontSize: '0.65rem' }}>ORDER</span>
-                </Link>
-              </li>
             </ul>
           </>
         )}
