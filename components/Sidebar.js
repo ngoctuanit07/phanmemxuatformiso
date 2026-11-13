@@ -187,7 +187,7 @@ export default function Sidebar() {
 
       <div className="p-3 border-top border-secondary border-opacity-25 mt-auto">
         <div className="d-flex align-items-center justify-content-between text-secondary mb-2" style={{ fontSize: '0.8rem' }}>
-          <span>Phân quyền RBAC</span>
+          <span>Phân quyền</span>
           <span className="badge bg-success">{user?.role_code || 'Khách'}</span>
         </div>
         <button

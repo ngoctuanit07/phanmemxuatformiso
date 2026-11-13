@@ -62,7 +62,9 @@ export default function Navbar() {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarContent">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+          <div className="navbar-nav me-auto mb-2 mb-lg-0">
+            </div>
+          {/* <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
               <Link href="/templates" className="nav-link text-white-50 hover-white">
                 <i className="bi bi-folder2-open me-1"></i> Biểu Mẫu
@@ -93,11 +95,11 @@ export default function Navbar() {
                 <i className="bi bi-printer me-1"></i> Nhật Ký In
               </Link>
             </li>
-          </ul>
+          </ul> */}
 
           <div className="d-flex align-items-center gap-3">
             {/* Quick Role Switcher for instant testing */}
-            <div className="dropdown">
+            {/* <div className="dropdown">
               <button
                 className="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-1"
                 type="button"
@@ -141,7 +143,7 @@ export default function Navbar() {
                   </button>
                 </li>
               </ul>
-            </div>
+            </div> */}
 
             {/* Current user badge & profile dropdown */}
             {user ? (

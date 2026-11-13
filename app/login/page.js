@@ -152,7 +152,7 @@ function LoginFormContent() {
               </form>
 
               {/* Quick Login Test Accounts for easy grading & demo */}
-              <div className="mt-4 pt-4 border-top">
+              {/* <div className="mt-4 pt-4 border-top">
                 <div className="text-center text-muted small fw-bold mb-2 text-uppercase">
                   Đăng nhập nhanh 1-Click để kiểm thử phân quyền:
                 </div>
@@ -196,13 +196,13 @@ function LoginFormContent() {
                     <span className="badge bg-info text-dark">nhanvien / nhanvien123</span>
                   </button>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Footer */}
             <div className="card-footer bg-light py-3 text-center small text-muted border-0">
               <i className="bi bi-shield-check text-success me-1"></i>
-              Bảo mật mã hóa Bcrypt & JWT Session • CSDL MySQL: <code>phanmemxuatform</code>
+              Bảo mật mã hóa Bcrypt & JWT Session • CSDL MySQL
             </div>
           </div>
         </div>
