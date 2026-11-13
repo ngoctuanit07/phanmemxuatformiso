@@ -75,7 +75,7 @@ export default function Navbar() {
             </li>
             <li className="nav-item">
               <Link href="/records" className="nav-link text-white-50 hover-white">
-                <i className="bi bi-clock-history me-1"></i> Form Đã Lưu
+                <i className="bi bi-database-check me-1"></i> Dữ Liệu Đã Nhập & In Lại
               </Link>
             </li>
             <li className="nav-item">

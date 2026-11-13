@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { getCurrentUser, hasPermission } from '@/lib/auth';
+import { ISO_TEMPLATE_CODES } from '@/lib/constants';
 
 export async function GET(request) {
   try {
@@ -15,10 +16,11 @@ export async function GET(request) {
     const categoryId = searchParams.get('category_id');
     const search = searchParams.get('search');
     const status = searchParams.get('status') || 'active';
+    const type = (searchParams.get('type') || searchParams.get('group') || '').trim().toLowerCase();
 
     let sql = `
       SELECT t.id, t.code, t.name, t.description, t.category_id, t.file_path, t.file_name,
-             t.file_type, t.file_size, t.fields_schema, t.version, t.status, t.created_at,
+             t.file_type, t.file_size, t.fields_schema, t.version, t.status, t.created_at, t.updated_at,
              c.name AS category_name,
              u.full_name AS created_by_name,
              (SELECT COUNT(*) FROM form_records fr WHERE fr.template_id = t.id) AS records_count,
@@ -35,24 +37,48 @@ export async function GET(request) {
       params.push(status);
     }
 
+    if (type === 'iso') {
+      sql += ` AND UPPER(TRIM(t.code)) IN (?, ?, ?, ?)`;
+      params.push(...ISO_TEMPLATE_CODES);
+    } else if (type === 'regular' || type === 'standard') {
+      sql += ` AND (UPPER(TRIM(t.code)) NOT IN (?, ?, ?, ?) OR t.code IS NULL)`;
+      params.push(...ISO_TEMPLATE_CODES);
+    }
+
     if (categoryId) {
       sql += ` AND t.category_id = ?`;
       params.push(categoryId);
     }
 
     if (search) {
-      sql += ` AND (t.name LIKE ? OR t.code LIKE ? OR t.description LIKE ?)`;
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      sql += ` AND (t.name LIKE ? OR t.code LIKE ? OR t.description LIKE ? OR t.file_name LIKE ?)`;
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    sql += ` ORDER BY t.created_at DESC`;
+    sql += ` ORDER BY t.created_at DESC, t.id DESC`;
 
     const templates = await query(sql, params);
+
+    // Group counts for tabs & badges
+    const statusParam = status !== 'all' ? status : 'active';
+    const [isoRow] = await query(
+      `SELECT COUNT(*) AS count FROM templates WHERE status = ? AND UPPER(TRIM(code)) IN (?, ?, ?, ?)`,
+      [statusParam, ...ISO_TEMPLATE_CODES]
+    );
+    const [regularRow] = await query(
+      `SELECT COUNT(*) AS count FROM templates WHERE status = ? AND (UPPER(TRIM(code)) NOT IN (?, ?, ?, ?) OR code IS NULL)`,
+      [statusParam, ...ISO_TEMPLATE_CODES]
+    );
+    const counts = {
+      iso: isoRow?.count || 0,
+      regular: regularRow?.count || 0,
+      total: (isoRow?.count || 0) + (regularRow?.count || 0)
+    };
 
     // Categories list for filtering
     const categories = await query(`SELECT id, name, code FROM template_categories ORDER BY id ASC`);
 
-    return NextResponse.json({ success: true, templates, categories });
+    return NextResponse.json({ success: true, templates, categories, counts });
   } catch (error) {
     console.error('Error fetching templates:', error);
     return NextResponse.json({ success: false, message: 'Lỗi tải danh sách biểu mẫu' }, { status: 500 });

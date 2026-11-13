@@ -65,20 +65,22 @@ export default function Dashboard() {
         </div>
 
         <div className="col-12 col-sm-6 col-xl">
-          <div className="card h-100 border-success border-opacity-25 bg-white shadow-sm">
-            <div className="card-body d-flex align-items-center justify-content-between p-3">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold fs-7">Hồ Sơ Đã Lưu CSDL</span>
-                <h4 className="fw-bold my-1 text-success">
-                  {loading ? '...' : (data?.stats?.records || 0)}
-                </h4>
-                <small className="text-muted"><i className="bi bi-database-check me-1"></i>Lưu trữ MySQL</small>
-              </div>
-              <div className="p-3 bg-success bg-opacity-10 text-success rounded-circle">
-                <i className="bi bi-file-earmark-check fs-4"></i>
+          <Link href="/records" className="text-decoration-none">
+            <div className="card h-100 border-success border-opacity-25 bg-white shadow-sm hover-shadow transition">
+              <div className="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                  <span className="text-muted text-uppercase fw-semibold fs-7">Hồ Sơ Đã Lưu CSDL</span>
+                  <h4 className="fw-bold my-1 text-success">
+                    {loading ? '...' : (data?.stats?.records || 0)}
+                  </h4>
+                  <small className="text-muted"><i className="bi bi-database-check me-1"></i>Xem & In lại &rarr;</small>
+                </div>
+                <div className="p-3 bg-success bg-opacity-10 text-success rounded-circle">
+                  <i className="bi bi-file-earmark-check fs-4"></i>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="col-12 col-sm-6 col-xl">
@@ -167,8 +169,11 @@ export default function Dashboard() {
                       </small>
                     </div>
                     <div className="d-flex gap-2">
-                      <Link href={`/fill/${tpl.id}`} className="btn btn-sm btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                      <Link href={`/fill/${tpl.id}`} className="btn btn-sm btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1 shadow-sm">
                         <i className="bi bi-pencil-square"></i> Điền Form & In
+                      </Link>
+                      <Link href={`/records?template_id=${tpl.id}`} className="btn btn-sm btn-outline-info d-flex align-items-center justify-content-center gap-1 shadow-sm" title="Quản lý dữ liệu đã lưu của biểu mẫu này">
+                        <i className="bi bi-database"></i> Dữ Liệu
                       </Link>
                     </div>
                   </div>
@@ -230,9 +235,14 @@ export default function Dashboard() {
                             </span>
                           </td>
                           <td className="text-end">
-                            <Link href={`/records/${rec.id}`} className="btn btn-sm btn-outline-primary me-1" title="Xem & In">
-                              <i className="bi bi-printer"></i> In
-                            </Link>
+                            <div className="btn-group btn-group-sm">
+                              <Link href={`/records/${rec.id}`} className="btn btn-warning text-dark fw-bold" title="In Lại Hồ Sơ Này">
+                                <i className="bi bi-printer-fill me-1"></i> In Lại
+                              </Link>
+                              <Link href={`/fill?record_id=${rec.id}`} className="btn btn-outline-primary" title="Sửa Dữ Liệu">
+                                <i className="bi bi-pencil-square"></i>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))

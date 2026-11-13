@@ -18,8 +18,16 @@ function getClientIdentifier(request, username) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { username, password } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json(
+        { success: false, message: 'Dữ liệu yêu cầu không hợp lệ (JSON)' },
+        { status: 400 }
+      );
+    }
+    const { username, password } = body || {};
 
     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
       return NextResponse.json(

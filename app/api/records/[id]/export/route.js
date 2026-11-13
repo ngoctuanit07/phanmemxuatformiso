@@ -6,6 +6,7 @@ import path from 'path';
 import { queryOne } from '@/lib/db';
 import { getCurrentUser, hasPermission } from '@/lib/auth';
 import { fillDocxTemplate, renderRecordHtml } from '@/lib/docx-engine';
+import { generatePdfFromHtml } from '@/lib/pdf-engine';
 
 export async function GET(request, { params }) {
   try {
@@ -60,6 +61,20 @@ export async function GET(request, { params }) {
       return new NextResponse(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
+          'X-Content-Type-Options': 'nosniff'
+        }
+      });
+    }
+
+    if (format === 'pdf') {
+      const html = await renderRecordHtml(fullTemplatePath, templateBuffer, formData, record.template_code);
+      const pdfBuffer = await generatePdfFromHtml(html, { format: 'A4' });
+      const filename = `${record.code}.pdf`;
+      return new NextResponse(pdfBuffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+          'Content-Length': pdfBuffer.length.toString(),
           'X-Content-Type-Options': 'nosniff'
         }
       });

@@ -9,12 +9,15 @@ function FillFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTemplateId = searchParams.get('template_id');
+  const initialRecordId = searchParams.get('record_id') || searchParams.get('id');
+  const initialMode = searchParams.get('mode');
 
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId || '');
   const [currentTemplate, setCurrentTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [recordTitle, setRecordTitle] = useState('');
+  const [loadedRecordId, setLoadedRecordId] = useState(null);
 
   // Status & UI states
   const [loading, setLoading] = useState(false);
@@ -76,28 +79,89 @@ function FillFormContent() {
     });
   };
 
-  // 1. Fetch available templates
+  // 1. Fetch available templates & initial record if provided
   useEffect(() => {
     fetch('/api/templates')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           setTemplates(data.templates);
-          if (!selectedTemplateId && data.templates.length > 0) {
+          if (!initialRecordId && !selectedTemplateId && data.templates.length > 0) {
             setSelectedTemplateId(data.templates[0].id.toString());
           }
         }
       })
       .catch(console.error);
+
+    // If initialRecordId is specified, preload saved record data
+    if (initialRecordId) {
+      setLoading(true);
+      fetch(`/api/records/${initialRecordId}`)
+        .then(res => res.json())
+        .then(async data => {
+          if (data.success && data.record) {
+            const rec = data.record;
+            setLoadedRecordId(rec.id);
+            setSelectedTemplateId(rec.template_id.toString());
+
+            // Fetch template detail
+            try {
+              const tplRes = await fetch(`/api/templates/${rec.template_id}`).then(r => r.json());
+              if (tplRes.success && tplRes.template) {
+                const tpl = tplRes.template;
+                setCurrentTemplate(tpl);
+
+                const initialValues = {};
+                if (Array.isArray(tpl.fields_schema)) {
+                  tpl.fields_schema.forEach(field => {
+                    initialValues[field.name] = field.default_value || '';
+                  });
+                }
+                // Prepopulate with saved form_data
+                setFormData({ ...initialValues, ...(rec.form_data || {}) });
+
+                if (initialMode === 'duplicate') {
+                  setRecordTitle(`Bản sao của ${rec.title}`);
+                  setSavedRecord(null);
+                  setAlertInfo({
+                    type: 'info',
+                    message: `Đang nhân bản từ hồ sơ [${rec.code}]. Toàn bộ dữ liệu đã được nạp sẵn, bạn có thể chỉnh sửa và lưu thành hồ sơ mới.`
+                  });
+                } else {
+                  setRecordTitle(rec.title);
+                  setSavedRecord({ id: rec.id, code: rec.code });
+                  setAlertInfo({
+                    type: 'info',
+                    message: `Đang mở hồ sơ [${rec.code}] để chỉnh sửa dữ liệu và in lại.`
+                  });
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching template for record:', err);
+            }
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading initial record:', err);
+          setLoading(false);
+        });
+    }
   }, []);
 
-  // 2. Fetch selected template detail and initialize dynamic form
+  // 2. Fetch selected template detail when template selection changes
   useEffect(() => {
     if (!selectedTemplateId) return;
+
+    // Skip overwriting formData if we are currently loading initialRecordId for this template
+    if (loadedRecordId && String(currentTemplate?.id) === String(selectedTemplateId)) {
+      return;
+    }
 
     setLoading(true);
     setSavedRecord(null);
     setAlertInfo(null);
+    setLoadedRecordId(null);
 
     fetch(`/api/templates/${selectedTemplateId}`)
       .then(res => res.json())
@@ -143,7 +207,7 @@ function FillFormContent() {
   };
 
   // Save form data to MySQL database
-  const saveFormRecord = async () => {
+  const saveFormRecord = async (saveAsNew = false) => {
     if (!selectedTemplateId) {
       setAlertInfo({ type: 'danger', message: 'Vui lòng chọn một biểu mẫu template.' });
       return null;
@@ -154,8 +218,8 @@ function FillFormContent() {
 
     try {
       let res, data;
-      // If updating an already saved record
-      if (savedRecord && savedRecord.id) {
+      // If updating an already saved record (and not saving as new copy)
+      if (!saveAsNew && savedRecord && savedRecord.id) {
         res = await fetch(`/api/records/${savedRecord.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -207,9 +271,9 @@ function FillFormContent() {
   };
 
   // Save to DB and trigger local printer immediately
-  const handleSaveAndPrint = async () => {
+  const handleSaveAndPrint = async (saveAsNew = false) => {
     setPrinting(true);
-    const recordId = await saveFormRecord();
+    const recordId = await saveFormRecord(saveAsNew);
 
     if (!recordId) {
       setPrinting(false);
@@ -268,19 +332,32 @@ function FillFormContent() {
       {/* Header */}
       <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
         <div>
+          {savedRecord && (
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <span className="badge bg-warning text-dark font-monospace fw-bold">
+                <i className="bi bi-pencil-square me-1"></i>Đang Sửa Dữ Liệu: {savedRecord.code}
+              </span>
+              <Link href="/records" className="small text-muted text-decoration-none">
+                &larr; Quay lại Quản lý dữ liệu
+              </Link>
+            </div>
+          )}
           <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-pencil-square me-2"></i>Nhập Liệu, Lưu CSDL & In Máy Local
+            <i className="bi bi-pencil-square me-2"></i>
+            {savedRecord ? `Chỉnh Sửa Dữ Liệu & In Lại: ${recordTitle}` : 'Nhập Liệu, Lưu CSDL & In Máy Local'}
           </h3>
           <p className="text-muted mb-0">
-            Chọn biểu mẫu có sẵn, điền thông tin, hệ thống tự động lưu vào MySQL và nạp dữ liệu vào file mẫu để in trực tiếp ra máy in local.
+            {savedRecord
+              ? 'Chỉnh sửa thông tin hồ sơ đã lưu, hệ thống tự động cập nhật vào CSDL và kết xuất lại file mẫu để in ra máy in local.'
+              : 'Chọn biểu mẫu có sẵn, điền thông tin, hệ thống tự động lưu vào MySQL và nạp dữ liệu vào file mẫu để in trực tiếp ra máy in local.'}
           </p>
         </div>
         <div className="d-flex gap-2 mt-2 mt-md-0">
-          <Link href="/records" className="btn btn-outline-secondary">
-            <i className="bi bi-clock-history me-1"></i> Danh sách form đã lưu
+          <Link href="/records" className="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm">
+            <i className="bi bi-database-check me-1"></i> Quản Lý Dữ Liệu Đã Nhập
           </Link>
-          <Link href="/templates/upload" className="btn btn-outline-primary">
-            <i className="bi bi-cloud-arrow-up me-1"></i> Nạp thêm mẫu Word mới
+          <Link href="/templates/upload" className="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
+            <i className="bi bi-cloud-arrow-up me-1"></i> Nạp Thêm Mẫu Word Mới
           </Link>
         </div>
       </div>
@@ -505,7 +582,7 @@ function FillFormContent() {
                   <button
                     type="button"
                     className="btn btn-warning btn-lg text-dark fw-bold d-flex align-items-center justify-content-center gap-2 shadow"
-                    onClick={handleSaveAndPrint}
+                    onClick={() => handleSaveAndPrint(false)}
                     disabled={printing || saving}
                   >
                     {printing ? (
@@ -516,7 +593,7 @@ function FillFormContent() {
                     ) : (
                       <>
                         <i className="bi bi-printer-fill fs-4"></i>
-                        <span>LƯU & IN RA MÁY IN LOCAL</span>
+                        <span>{savedRecord ? 'CẬP NHẬT & IN LẠI RA MÁY IN LOCAL' : 'LƯU & IN RA MÁY IN LOCAL'}</span>
                       </>
                     )}
                   </button>
@@ -525,7 +602,7 @@ function FillFormContent() {
                   <button
                     type="button"
                     className="btn btn-success d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
-                    onClick={saveFormRecord}
+                    onClick={() => saveFormRecord(false)}
                     disabled={saving}
                   >
                     {saving ? (
@@ -536,10 +613,24 @@ function FillFormContent() {
                     ) : (
                       <>
                         <i className="bi bi-floppy2-fill"></i>
-                        <span>Lưu Dữ Liệu Vào Cơ Sở Dữ Liệu</span>
+                        <span>{savedRecord ? 'Lưu Cập Nhật Vào CSDL' : 'Lưu Dữ Liệu Vào Cơ Sở Dữ Liệu'}</span>
                       </>
                     )}
                   </button>
+
+                  {/* Option: Save as New Copy if editing existing record */}
+                  {savedRecord && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-info d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+                      onClick={() => handleSaveAndPrint(true)}
+                      disabled={saving || printing}
+                      title="Lưu các thông tin này thành một bản ghi mới độc lập và in"
+                    >
+                      <i className="bi bi-copy"></i>
+                      <span>Lưu Thành Bản Ghi Mới & In</span>
+                    </button>
+                  )}
 
                   {/* Preview Action */}
                   <button
@@ -552,14 +643,31 @@ function FillFormContent() {
                   </button>
 
                   {savedRecord && (
-                    <a
-                      href={`/api/records/${savedRecord.id}/export?format=docx`}
-                      className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-2"
-                    >
-                      <i className="bi bi-file-earmark-word"></i>
-                      <span>Tải Xuống File Word (.docx) Đã Điền</span>
-                    </a>
+                    <div className="btn-group w-100" role="group">
+                      <a
+                        href={`/api/records/${savedRecord.id}/export?format=docx`}
+                        className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1 py-2"
+                      >
+                        <i className="bi bi-file-earmark-word text-primary"></i>
+                        <span>Tải Word</span>
+                      </a>
+                      <a
+                        href={`/api/records/${savedRecord.id}/export?format=pdf`}
+                        className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1 py-2"
+                      >
+                        <i className="bi bi-file-earmark-pdf text-danger"></i>
+                        <span>Tải PDF</span>
+                      </a>
+                    </div>
                   )}
+
+                  <Link
+                    href="/records"
+                    className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-2 mt-1"
+                  >
+                    <i className="bi bi-database-check"></i>
+                    <span>Về Quản Lý Dữ Liệu Đã Nhập</span>
+                  </Link>
                 </div>
 
                 <div className="mt-4 pt-3 border-top">

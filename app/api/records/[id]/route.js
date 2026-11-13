@@ -50,6 +50,19 @@ export async function GET(request, { params }) {
       }
     }
 
+    // Fetch print history
+    const printLogs = await query(
+      `SELECT pl.id, pl.printer_name, pl.paper_size, pl.copies, pl.ip_address, pl.status, pl.created_at,
+              u.full_name AS printed_by_name
+       FROM print_logs pl
+       LEFT JOIN users u ON pl.user_id = u.id
+       WHERE pl.form_record_id = ?
+       ORDER BY pl.created_at DESC
+       LIMIT 20`,
+      [id]
+    );
+    record.print_history = printLogs || [];
+
     return NextResponse.json({ success: true, record });
   } catch (error) {
     console.error('Error fetching record:', error);

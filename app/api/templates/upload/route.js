@@ -33,8 +33,8 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.' }, { status: 401 });
     }
 
-    if (!hasPermission(currentUser, 'template.create')) {
-      return NextResponse.json({ success: false, message: 'Từ chối: Bạn không có quyền nạp mẫu biểu mới' }, { status: 403 });
+    if (!hasPermission(currentUser, 'template.create') && !hasPermission(currentUser, 'template.edit')) {
+      return NextResponse.json({ success: false, message: 'Từ chối: Bạn không có quyền nạp hoặc cập nhật tệp mẫu biểu' }, { status: 403 });
     }
 
     const formData = await request.formData();

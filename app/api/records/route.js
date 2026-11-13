@@ -18,11 +18,14 @@ export async function GET(request) {
     const templateId = searchParams.get('template_id');
     const search = searchParams.get('search');
     const status = searchParams.get('status');
+    const fromDate = searchParams.get('from_date');
+    const toDate = searchParams.get('to_date');
+    const hasPrinted = searchParams.get('has_printed');
 
     let sql = `
       SELECT fr.id, fr.code, fr.template_id, fr.title, fr.form_data, fr.status,
              fr.print_count, fr.last_printed_at, fr.created_at, fr.updated_at,
-             t.name AS template_name, t.file_type AS template_type,
+             t.name AS template_name, t.code AS template_code, t.file_type AS template_type,
              u.full_name AS created_by_name
       FROM form_records fr
       INNER JOIN templates t ON fr.template_id = t.id
@@ -42,19 +45,77 @@ export async function GET(request) {
       params.push(templateId);
     }
 
-    if (status) {
+    if (status && status !== 'all') {
       sql += ` AND fr.status = ?`;
       params.push(status);
     }
 
-    if (search) {
-      sql += ` AND (fr.title LIKE ? OR fr.code LIKE ? OR fr.form_data LIKE ?)`;
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    if (fromDate) {
+      sql += ` AND DATE(fr.created_at) >= ?`;
+      params.push(fromDate);
+    }
+
+    if (toDate) {
+      sql += ` AND DATE(fr.created_at) <= ?`;
+      params.push(toDate);
+    }
+
+    if (hasPrinted === 'yes') {
+      sql += ` AND fr.print_count > 0`;
+    } else if (hasPrinted === 'no') {
+      sql += ` AND fr.print_count = 0`;
+    }
+
+    if (search && search.trim()) {
+      const kw = `%${search.trim()}%`;
+      sql += ` AND (fr.title LIKE ? OR fr.code LIKE ? OR t.name LIKE ? OR t.code LIKE ? OR fr.form_data LIKE ?)`;
+      params.push(kw, kw, kw, kw, kw);
     }
 
     sql += ` ORDER BY fr.created_at DESC`;
 
     const records = await query(sql, params);
+
+    // Compute template stats & overall metrics for current user view
+    let statsSql = `
+      SELECT t.id AS template_id, t.code AS template_code, t.name AS template_name,
+             COUNT(fr.id) AS count,
+             COALESCE(SUM(fr.print_count), 0) AS total_prints
+      FROM form_records fr
+      INNER JOIN templates t ON fr.template_id = t.id
+      WHERE 1=1
+    `;
+    const statsParams = [];
+    if (user.role_code === 'STAFF') {
+      statsSql += ` AND fr.created_by = ?`;
+      statsParams.push(user.id);
+    }
+    statsSql += ` GROUP BY t.id, t.code, t.name ORDER BY count DESC`;
+    const templateStats = await query(statsSql, statsParams);
+
+    // Overall summary metrics
+    let summarySql = `
+      SELECT COUNT(*) AS total_records,
+             COALESCE(SUM(print_count), 0) AS total_prints,
+             COUNT(DISTINCT template_id) AS templates_used,
+             MAX(last_printed_at) AS last_printed_at,
+             MAX(created_at) AS latest_record_at
+      FROM form_records fr
+      WHERE 1=1
+    `;
+    const summaryParams = [];
+    if (user.role_code === 'STAFF') {
+      summarySql += ` AND fr.created_by = ?`;
+      summaryParams.push(user.id);
+    }
+    const summaryResult = await query(summarySql, summaryParams);
+    const summary = summaryResult[0] || {
+      total_records: 0,
+      total_prints: 0,
+      templates_used: 0,
+      last_printed_at: null,
+      latest_record_at: null
+    };
 
     // Parse form_data JSON for each record
     const formattedRecords = records.map(r => {
@@ -64,12 +125,17 @@ export async function GET(request) {
           data = JSON.parse(r.form_data);
         } catch (e) {}
       } else {
-        data = r.form_data;
+        data = r.form_data || {};
       }
       return { ...r, form_data: data };
     });
 
-    return NextResponse.json({ success: true, records: formattedRecords });
+    return NextResponse.json({
+      success: true,
+      records: formattedRecords,
+      template_stats: templateStats,
+      summary: summary
+    });
   } catch (error) {
     console.error('Error fetching records:', error);
     return NextResponse.json({ success: false, message: 'Lỗi tải danh sách hồ sơ' }, { status: 500 });
@@ -130,5 +196,50 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating form record:', error);
     return NextResponse.json({ success: false, message: 'Lỗi lưu hồ sơ' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'Chưa đăng nhập' }, { status: 401 });
+    }
+    if (!hasPermission(user, 'record.delete')) {
+      return NextResponse.json({ success: false, message: 'Từ chối: Bạn không có quyền xóa hồ sơ' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { ids } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ success: false, message: 'Vui lòng cung cấp danh sách ID hồ sơ cần xóa' }, { status: 400 });
+    }
+
+    // Check staff permissions
+    if (user.role_code === 'STAFF') {
+      const placeholders = ids.map(() => '?').join(',');
+      const rows = await query(
+        `SELECT id FROM form_records WHERE id IN (${placeholders}) AND created_by != ?`,
+        [...ids, user.id]
+      );
+      if (rows.length > 0) {
+        return NextResponse.json({
+          success: false,
+          message: 'Bạn chỉ có quyền xóa các hồ sơ do chính mình tạo'
+        }, { status: 403 });
+      }
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    await query(`DELETE FROM form_records WHERE id IN (${placeholders})`, ids);
+
+    return NextResponse.json({
+      success: true,
+      message: `Đã xóa thành công ${ids.length} hồ sơ khỏi cơ sở dữ liệu`
+    });
+  } catch (error) {
+    console.error('Error batch deleting records:', error);
+    return NextResponse.json({ success: false, message: 'Lỗi xóa hồ sơ hàng loạt' }, { status: 500 });
   }
 }

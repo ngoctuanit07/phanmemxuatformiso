@@ -28,7 +28,12 @@ export default function Sidebar() {
     if (user.role_code === 'ADMIN') return true;
     switch (moduleName) {
       case 'Templates':
-        return hasPerm('template.view') || hasPerm('template.create');
+        return (
+          hasPerm('template.view') ||
+          hasPerm('template.create') ||
+          hasPerm('template.edit') ||
+          hasPerm('template.delete')
+        );
       case 'Records':
         return hasPerm('record.view') || hasPerm('record.create') || hasPerm('record.print');
       case 'Logs':
@@ -72,10 +77,32 @@ export default function Sidebar() {
             <div className="nav-header">MODULE BIỂU MẪU</div>
             <ul className="nav flex-column">
               {hasPerm('template.view') && (
+                <>
+                  <li className="nav-item">
+                    <Link
+                      href="/templates/regular"
+                      className={`nav-link ${pathname === '/templates/regular' || pathname === '/templates' ? 'active' : ''}`}
+                    >
+                      <i className="bi bi-collection"></i>
+                      <span>Template Thường Quy</span>
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link
+                      href="/templates/iso"
+                      className={`nav-link ${pathname === '/templates/iso' ? 'active' : ''}`}
+                    >
+                      <i className="bi bi-patch-check"></i>
+                      <span>Template ISO</span>
+                    </Link>
+                  </li>
+                </>
+              )}
+              {(hasPerm('template.edit') || hasPerm('template.delete')) && (
                 <li className="nav-item">
-                  <Link href="/templates" className={`nav-link ${pathname === '/templates' ? 'active' : ''}`}>
-                    <i className="bi bi-collection"></i>
-                    <span>Danh Sách Template</span>
+                  <Link href="/templates/manage" className={`nav-link ${pathname === '/templates/manage' ? 'active' : ''}`}>
+                    <i className="bi bi-sliders"></i>
+                    <span>Quản Lý File Template</span>
                   </Link>
                 </li>
               )}
@@ -94,21 +121,22 @@ export default function Sidebar() {
 
         {hasModule('Records') && (
           <>
-            <div className="nav-header">MODULE NHẬP LIỆU & IN</div>
+            <div className="nav-header">DỮ LIỆU ĐÃ NHẬP & IN LẠI</div>
             <ul className="nav flex-column">
+              {hasPerm('record.view') && (
+                <li className="nav-item">
+                  <Link href="/records" className={`nav-link ${pathname.startsWith('/records') ? 'active' : ''}`}>
+                    <i className="bi bi-database-check"></i>
+                    <span>Dữ Liệu Đã Nhập & In Lại</span>
+                    <span className="badge bg-warning text-dark ms-auto font-monospace" style={{ fontSize: '0.65rem' }}>QUẢN LÝ</span>
+                  </Link>
+                </li>
+              )}
               {hasPerm('record.create') && (
                 <li className="nav-item">
                   <Link href="/fill" className={`nav-link ${pathname.startsWith('/fill') ? 'active' : ''}`}>
                     <i className="bi bi-pencil-square"></i>
-                    <span>Nhập Liệu & In Form</span>
-                  </Link>
-                </li>
-              )}
-              {hasPerm('record.view') && (
-                <li className="nav-item">
-                  <Link href="/records" className={`nav-link ${pathname.startsWith('/records') ? 'active' : ''}`}>
-                    <i className="bi bi-file-earmark-check"></i>
-                    <span>Hồ Sơ Form Đã Lưu</span>
+                    <span>Nhập Liệu Mới Vào Form</span>
                   </Link>
                 </li>
               )}
