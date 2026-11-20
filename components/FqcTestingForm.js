@@ -113,7 +113,6 @@ function buildMixRows({ block, testNum, klGroup, prefix, isNoCtNeg = false }) {
 function buildFqcTableSpec(templateCode) {
   if (templateCode === 'FQC-002-02') {
     return {
-      noSuffix: '/PQCCPDT',
       hasControlLotAndSerialRows: true,
       hasMixCol: false,
       hasHexStandardInputs: true,
@@ -148,7 +147,6 @@ function buildFqcTableSpec(templateCode) {
   if (templateCode === 'FQC-003-02') {
     const mixes = ['A', 'B', 'C'];
     return {
-      noSuffix: '/PQCCPDT',
       hasControlLotAndSerialRows: true,
       hasMixCol: false,
       hasHexStandardInputs: false,
@@ -195,7 +193,6 @@ function buildFqcTableSpec(templateCode) {
       { mix: 'Mix 2.3', mKey: 'm23', ch: 'Hex' }
     ];
     return {
-      noSuffix: '/PQCCPDT',
       hasControlLotAndSerialRows: true,
       hasMixCol: true,
       hasHexStandardInputs: false,
@@ -430,7 +427,6 @@ function buildFqcTableSpec(templateCode) {
 
   if (templateCode === 'FQC-013-01') {
     return {
-      noSuffix: '/PQCCPDT',
       hasControlLotAndSerialRows: false,
       hasMixCol: false,
       hasHexStandardInputs: false,
@@ -466,7 +462,6 @@ function buildFqcTableSpec(templateCode) {
 
   // FQC-005-02 (NGN/CHT/GV/TV)
   return {
-    noSuffix: '/PQCCPDT',
     hasControlLotAndSerialRows: true,
     hasMixCol: true,
     hasHexStandardInputs: true,
@@ -558,29 +553,49 @@ export default function FqcTestingForm({ templateCode, formData, onChange, onBat
             <label className="form-label fw-semibold text-dark mb-1">
               Bộ phận <span className="text-muted fw-normal">(Department)</span> <span className="text-danger">*</span>
             </label>
-            <input
-              type="text"
-              className="form-control"
+            <select
+              className="form-select"
               value={val('bo_phan')}
               onChange={(e) => onChange('bo_phan', e.target.value)}
-              placeholder="VD: KTCL / QC"
-            />
+              required
+            >
+              <option value="">-- Chọn Bộ phận (Department) --</option>
+              <option value="Phòng QA">Phòng QA</option>
+              <option value="Phòng Kinh Doanh">Phòng Kinh Doanh</option>
+              <option value="Phòng KCS">Phòng KCS</option>
+              <option value="Phòng Sản xuất">Phòng Sản xuất</option>
+              {val('bo_phan') && !['Phòng QA', 'Phòng Kinh Doanh', 'Phòng KCS', 'Phòng Sản xuất'].includes(val('bo_phan')) && (
+                <option value={val('bo_phan')}>{val('bo_phan')}</option>
+              )}
+            </select>
           </div>
 
           <div className="col-12 col-md-6">
             <label className="form-label fw-semibold text-dark mb-1">
               Số phiếu <span className="text-muted fw-normal">(No.)</span> <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
+            {spec.noSuffix && spec.noSuffix !== '/PQCCPDT' ? (
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={val('so_phieu')}
+                  onChange={(e) => onChange('so_phieu', e.target.value)}
+                  placeholder="VD: 015/2026"
+                  required
+                />
+                <span className="input-group-text font-monospace bg-light">{spec.noSuffix}</span>
+              </div>
+            ) : (
               <input
                 type="text"
                 className="form-control"
                 value={val('so_phieu')}
                 onChange={(e) => onChange('so_phieu', e.target.value)}
                 placeholder="VD: 015/2026"
+                required
               />
-              <span className="input-group-text font-monospace bg-light">{spec.noSuffix || '/PQCCPDT'}</span>
-            </div>
+            )}
           </div>
 
           <div className="col-12">

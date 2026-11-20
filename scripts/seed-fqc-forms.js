@@ -2,9 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 
-const makeHeaderFieldsBasic = (noSuffix = '/PQCCPDT') => [
-  { name: 'bo_phan', label: 'Bộ phận (Department)', type: 'text', required: true, default_value: '' },
-  { name: 'so_phieu', label: `Số phiếu (No. ...${noSuffix})`, type: 'text', required: true, default_value: '' },
+const DEPARTMENT_OPTIONS = ['Phòng QA', 'Phòng Kinh Doanh', 'Phòng KCS', 'Phòng Sản xuất'];
+
+const makeHeaderFieldsBasic = (noSuffix = '') => [
+  { name: 'bo_phan', label: 'Bộ phận (Department)', type: 'select', options: DEPARTMENT_OPTIONS, required: true, default_value: '' },
+  { name: 'so_phieu', label: noSuffix && noSuffix !== '/PQCCPDT' ? `Số phiếu (No. ...${noSuffix})` : 'Số phiếu (No.)', type: 'text', required: true, default_value: '' },
   { name: 'ten_san_pham', label: 'Tên sản phẩm (Name of product)', type: 'text', required: true, default_value: '' },
   { name: 'ma_code', label: 'Mã code (Code)', type: 'text', required: true, default_value: '' },
   { name: 'ngay_san_xuat', label: 'Ngày sản xuất (Date of manufacture)', type: 'date', required: true, default_value: '' },
@@ -17,7 +19,7 @@ const makeHeaderFieldsBasic = (noSuffix = '/PQCCPDT') => [
 ];
 
 const COMMON_HEADER_FIELDS = [
-  ...makeHeaderFieldsBasic('/PQCCPDT'),
+  ...makeHeaderFieldsBasic(),
   { name: 'so_lot_chung_duong', label: 'Số lot chứng dương (Positive control lots)', type: 'text', required: false, default_value: '' },
   { name: 'han_su_dung_chung_duong', label: 'Hạn sử dụng chứng dương (Expiry date)', type: 'date', required: false, default_value: '' },
   { name: 'so_lot_chung_am', label: 'Số lot chứng âm (Negative control lots)', type: 'text', required: false, default_value: '' },
@@ -250,7 +252,7 @@ function buildFqcAsfvSchema() {
 
 function buildFqc013Schema() {
   const fields = [
-    ...makeHeaderFieldsBasic('/PQCCPDT'),
+    ...makeHeaderFieldsBasic(),
     txtField('the_tich_ket_qua', 'Mục 1: Độ đồng đều thể tích (20.0 µl) - Kết quả (µl)'),
     klField('kl_1', 'Mục 1: Kết luận dòng (Đạt / K.Đạt)')
   ];

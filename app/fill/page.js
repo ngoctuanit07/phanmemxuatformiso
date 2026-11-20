@@ -5,6 +5,43 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FqcTestingForm, { FQC_TEMPLATE_CODES } from '@/components/FqcTestingForm';
 
+const DEPARTMENT_OPTIONS = ['Phòng QA', 'Phòng Kinh Doanh', 'Phòng KCS', 'Phòng Sản xuất'];
+
+function isDepartmentField(field) {
+  const name = (field?.name || '').toLowerCase();
+  const label = (field?.label || '').toLowerCase();
+  return (
+    name === 'bo_phan' ||
+    name === 'phong_ban' ||
+    name === 'department' ||
+    name.endsWith('_phong_ban') ||
+    name.endsWith('_bo_phan') ||
+    label.includes('bộ phận') ||
+    label.includes('department') ||
+    label.includes('phòng ban')
+  );
+}
+
+function isSoPhieuField(field) {
+  const name = (field?.name || '').toLowerCase();
+  const label = (field?.label || '').toLowerCase();
+  return name === 'so_phieu' || label.includes('số phiếu') || label.includes('no.');
+}
+
+function getCleanFieldLabel(field) {
+  let label = field.label || field.name;
+  if (isDepartmentField(field)) {
+    return 'Bộ phận (Department)';
+  }
+  if (isSoPhieuField(field)) {
+    label = label.replace(/\/PQCCPDT/gi, '').replace(/\(\s*No\.\s*\.{3}\s*\)/gi, '(No.)').trim();
+    if (!label.toLowerCase().includes('số phiếu') && !label.toLowerCase().includes('no.')) {
+      label = 'Số phiếu (No.)';
+    }
+  }
+  return label;
+}
+
 function FillFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -114,11 +151,19 @@ function FillFormContent() {
                 const initialValues = {};
                 if (Array.isArray(tpl.fields_schema)) {
                   tpl.fields_schema.forEach(field => {
-                    initialValues[field.name] = field.default_value || '';
+                    let def = field.default_value || '';
+                    if (isSoPhieuField(field) && typeof def === 'string') {
+                      def = def.replace(/\/PQCCPDT$/i, '');
+                    }
+                    initialValues[field.name] = def;
                   });
                 }
+                const recData = { ...(rec.form_data || {}) };
+                if (typeof recData.so_phieu === 'string') {
+                  recData.so_phieu = recData.so_phieu.replace(/\/PQCCPDT$/i, '');
+                }
                 // Prepopulate with saved form_data
-                setFormData({ ...initialValues, ...(rec.form_data || {}) });
+                setFormData({ ...initialValues, ...recData });
 
                 if (initialMode === 'duplicate') {
                   setRecordTitle(`Bản sao của ${rec.title}`);
@@ -174,7 +219,11 @@ function FillFormContent() {
           const initialValues = {};
           if (Array.isArray(tpl.fields_schema)) {
             tpl.fields_schema.forEach(field => {
-              initialValues[field.name] = field.default_value || '';
+              let def = field.default_value || '';
+              if (isSoPhieuField(field) && typeof def === 'string') {
+                def = def.replace(/\/PQCCPDT$/i, '');
+              }
+              initialValues[field.name] = def;
             });
           }
           setFormData(initialValues);
@@ -493,12 +542,15 @@ function FillFormContent() {
                     currentTemplate.fields_schema.map((field, idx) => {
                       const value = formData[field.name] !== undefined ? formData[field.name] : '';
                       const isFullWidth = field.type === 'textarea' || (field.label && field.label.length > 25);
+                      const isDept = isDepartmentField(field);
+                      const isNo = isSoPhieuField(field);
+                      const displayLabel = getCleanFieldLabel(field);
 
                       return (
                         <div key={idx} className={isFullWidth ? 'col-12' : 'col-12 col-md-6'}>
                           <label className="form-label fw-semibold text-dark d-flex justify-content-between align-items-center mb-1">
                             <span>
-                              {field.label || field.name}
+                              {displayLabel}
                               {field.required && <span className="text-danger ms-1">*</span>}
                             </span>
                             <code className="text-muted small" style={{ fontSize: '0.75rem' }}>
@@ -507,13 +559,37 @@ function FillFormContent() {
                           </label>
 
                           {/* Render appropriate input element based on field type */}
-                          {field.type === 'textarea' ? (
+                          {isDept ? (
+                            <select
+                              className="form-select"
+                              value={value}
+                              onChange={(e) => handleInputChange(field.name, e.target.value)}
+                              required={field.required}
+                            >
+                              <option value="">-- Chọn Bộ phận (Department) --</option>
+                              {DEPARTMENT_OPTIONS.map((opt, oIdx) => (
+                                <option key={oIdx} value={opt}>{opt}</option>
+                              ))}
+                              {value && !DEPARTMENT_OPTIONS.includes(value) && (
+                                <option value={value}>{value}</option>
+                              )}
+                            </select>
+                          ) : isNo ? (
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={typeof value === 'string' ? value.replace(/\/PQCCPDT$/i, '') : value}
+                              onChange={(e) => handleInputChange(field.name, e.target.value)}
+                              placeholder="VD: 015/2026"
+                              required={field.required}
+                            />
+                          ) : field.type === 'textarea' ? (
                             <textarea
                               className="form-control"
                               rows="3"
                               value={value}
                               onChange={(e) => handleInputChange(field.name, e.target.value)}
-                              placeholder={`Nhập ${field.label || field.name}...`}
+                              placeholder={`Nhập ${displayLabel}...`}
                               required={field.required}
                             ></textarea>
                           ) : field.type === 'select' ? (
@@ -523,7 +599,7 @@ function FillFormContent() {
                               onChange={(e) => handleInputChange(field.name, e.target.value)}
                               required={field.required}
                             >
-                              <option value="">-- Chọn {field.label} --</option>
+                              <option value="">-- Chọn {displayLabel} --</option>
                               {Array.isArray(field.options) && field.options.map((opt, oIdx) => (
                                 <option key={oIdx} value={opt}>{opt}</option>
                               ))}
@@ -551,7 +627,7 @@ function FillFormContent() {
                               className="form-control"
                               value={value}
                               onChange={(e) => handleInputChange(field.name, e.target.value)}
-                              placeholder={`Nhập ${field.label || field.name}...`}
+                              placeholder={`Nhập ${displayLabel}...`}
                               required={field.required}
                             />
                           )}
