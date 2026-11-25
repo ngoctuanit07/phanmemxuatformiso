@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FqcTestingForm, { FQC_TEMPLATE_CODES } from '@/components/FqcTestingForm';
+import PageHeader from '@/components/PageHeader';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const DEPARTMENT_OPTIONS = ['Phòng QA', 'Phòng Kinh Doanh', 'Phòng KCS', 'Phòng Sản xuất'];
 
@@ -379,37 +381,35 @@ function FillFormContent() {
       />
 
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          {savedRecord && (
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <span className="badge bg-warning text-dark font-monospace fw-bold">
-                <i className="bi bi-pencil-square me-1"></i>Đang Sửa Dữ Liệu: {savedRecord.code}
-              </span>
-              <Link href="/records" className="small text-muted text-decoration-none">
-                &larr; Quay lại Quản lý dữ liệu
-              </Link>
-            </div>
-          )}
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-pencil-square me-2"></i>
-            {savedRecord ? `Chỉnh Sửa Dữ Liệu & In Lại: ${recordTitle}` : 'Nhập Liệu, Lưu CSDL & In Máy Local'}
-          </h3>
-          <p className="text-muted mb-0">
-            {savedRecord
-              ? 'Chỉnh sửa thông tin hồ sơ đã lưu, hệ thống tự động cập nhật vào CSDL và kết xuất lại file mẫu để in ra máy in local.'
-              : 'Chọn biểu mẫu có sẵn, điền thông tin, hệ thống tự động lưu vào MySQL và nạp dữ liệu vào file mẫu để in trực tiếp ra máy in local.'}
-          </p>
-        </div>
-        <div className="d-flex gap-2 mt-2 mt-md-0">
-          <Link href="/records" className="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm">
-            <i className="bi bi-database-check me-1"></i> Quản Lý Dữ Liệu Đã Nhập
-          </Link>
-          <Link href="/templates/upload" className="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
-            <i className="bi bi-cloud-arrow-up me-1"></i> Nạp Thêm Mẫu Word Mới
+      {savedRecord && (
+        <div className="d-flex align-items-center gap-2 mb-2">
+          <span className="badge bg-warning text-dark font-monospace fw-bold">
+            <i className="bi bi-pencil-square me-1" aria-hidden="true"></i>Đang Sửa Dữ Liệu: {savedRecord.code}
+          </span>
+          <Link href="/records" className="small text-muted text-decoration-none">
+            &larr; Quay lại Quản lý dữ liệu
           </Link>
         </div>
-      </div>
+      )}
+      <PageHeader
+        icon="bi-pencil-square"
+        title={savedRecord ? `Chỉnh Sửa Dữ Liệu & In Lại: ${recordTitle}` : 'Nhập Liệu, Lưu CSDL & In Máy Local'}
+        subtitle={
+          savedRecord
+            ? 'Chỉnh sửa thông tin hồ sơ đã lưu, hệ thống tự động cập nhật vào CSDL và kết xuất lại file mẫu để in ra máy in local.'
+            : 'Chọn biểu mẫu có sẵn, điền thông tin, hệ thống tự động lưu vào MySQL và nạp dữ liệu vào file mẫu để in trực tiếp ra máy in local.'
+        }
+        actions={
+          <>
+            <Link href="/records" className="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm">
+              <i className="bi bi-database-check me-1" aria-hidden="true"></i> Quản Lý Dữ Liệu Đã Nhập
+            </Link>
+            <Link href="/templates/upload" className="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
+              <i className="bi bi-cloud-arrow-up me-1" aria-hidden="true"></i> Nạp Thêm Mẫu Word Mới
+            </Link>
+          </>
+        }
+      />
 
       {alertInfo && (
         <div className={`alert alert-${alertInfo.type} alert-dismissible fade show shadow-sm`} role="alert">
@@ -479,10 +479,7 @@ function FillFormContent() {
       </div>
 
       {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status"></div>
-          <div className="text-muted mt-2">Đang tải cấu trúc trường biểu mẫu...</div>
-        </div>
+        <LoadingSpinner message="Đang tải cấu trúc trường biểu mẫu..." />
       ) : !currentTemplate ? (
         <div className="alert alert-warning">Chưa có biểu mẫu nào được chọn.</div>
       ) : (
@@ -670,26 +667,6 @@ function FillFormContent() {
                       <>
                         <i className="bi bi-printer-fill fs-4"></i>
                         <span>{savedRecord ? 'CẬP NHẬT & IN LẠI RA MÁY IN LOCAL' : 'LƯU & IN RA MÁY IN LOCAL'}</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Secondary Action: Save to DB only */}
-                  <button
-                    type="button"
-                    className="btn btn-success d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
-                    onClick={() => saveFormRecord(false)}
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm"></span>
-                        Đang lưu...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-floppy2-fill"></i>
-                        <span>{savedRecord ? 'Lưu Cập Nhật Vào CSDL' : 'Lưu Dữ Liệu Vào Cơ Sở Dữ Liệu'}</span>
                       </>
                     )}
                   </button>
@@ -891,12 +868,7 @@ function FillFormContent() {
 
 export default function FillFormPage() {
   return (
-    <Suspense fallback={
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status"></div>
-        <div className="text-muted mt-2">Đang tải biểu mẫu...</div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingSpinner message="Đang tải biểu mẫu..." />}>
       <FillFormContent />
     </Suspense>
   );

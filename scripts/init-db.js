@@ -154,7 +154,18 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
-    // 10. Audit Logs table
+    // 10. User Permissions table (direct permissions overrides per user)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`user_permissions\` (
+        \`user_id\` INT NOT NULL,
+        \`permission_id\` INT NOT NULL,
+        PRIMARY KEY (\`user_id\`, \`permission_id\`),
+        FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE,
+        FOREIGN KEY (\`permission_id\`) REFERENCES \`permissions\` (\`id\`) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 11. Audit Logs table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS \`audit_logs\` (
         \`id\` INT AUTO_INCREMENT PRIMARY KEY,
@@ -183,7 +194,7 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
-    console.log('✔ Toàn bộ 10 bảng cơ sở dữ liệu đã được tạo thành công.');
+    console.log('✔ Toàn bộ 11 bảng cơ sở dữ liệu đã được tạo thành công.');
   } catch (err) {
     console.error('Lỗi khởi tạo database:', err);
     throw err;

@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function FillSpecificTemplatePage() {
   const params = useParams();
@@ -16,10 +17,5 @@ export default function FillSpecificTemplatePage() {
     }
   }, [params, router]);
 
-  return (
-    <div className="text-center py-5">
-      <div className="spinner-border text-primary" role="status"></div>
-      <div className="text-muted mt-2">Đang tải biểu mẫu...</div>
-    </div>
-  );
+  return <LoadingSpinner message="Đang tải biểu mẫu..." />;
 }

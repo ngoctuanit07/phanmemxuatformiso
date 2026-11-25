@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import AlertBanner from '@/components/AlertBanner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const STATUS_META = {
   active: { label: 'Hoạt động', badgeClass: 'bg-success-subtle text-success border border-success-subtle' },
@@ -379,34 +382,30 @@ export default function ManageTemplatesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-sliders me-2"></i>Quản Lý File Biểu Mẫu Đã Nạp
-          </h3>
-          <p className="text-muted mb-0">
-            Chỉnh sửa tên hiển thị, mã biểu mẫu, phân loại, trạng thái, thay thế tệp Word/PDF hoặc xóa mẫu trong Kho Biểu Mẫu Template.
-          </p>
-        </div>
-        <div className="d-flex flex-wrap gap-2 mt-2 mt-md-0">
-          <Link href="/templates" className="btn btn-outline-secondary d-flex align-items-center gap-1">
-            <i className="bi bi-folder2-open"></i> Xem Kho Biểu Mẫu
-          </Link>
-          {canCreate && (
-            <Link href="/templates/upload" className="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
-              <i className="bi bi-cloud-arrow-up"></i> Nạp Biểu Mẫu Mới
+      <PageHeader
+        icon="bi-sliders"
+        title="Quản Lý File Biểu Mẫu Đã Nạp"
+        subtitle="Chỉnh sửa tên hiển thị, mã biểu mẫu, phân loại, trạng thái, thay thế tệp Word/PDF hoặc xóa mẫu trong Kho Biểu Mẫu Template."
+        actions={
+          <>
+            <Link href="/templates" className="btn btn-outline-secondary d-flex align-items-center gap-1">
+              <i className="bi bi-folder2-open" aria-hidden="true"></i> Xem Kho Biểu Mẫu
             </Link>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <Link href="/templates/upload" className="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+                <i className="bi bi-cloud-arrow-up" aria-hidden="true"></i> Nạp Biểu Mẫu Mới
+              </Link>
+            )}
+          </>
+        }
+      />
 
-      {feedback && (
-        <div className={`alert alert-${feedback.type} alert-dismissible fade show shadow-sm mb-4`} role="alert">
-          <i className={`bi ${feedback.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} me-2`}></i>
-          {feedback.text}
-          <button type="button" className="btn-close" onClick={() => setFeedback(null)}></button>
-        </div>
-      )}
+      <AlertBanner
+        type={feedback?.type}
+        message={feedback?.text}
+        onClose={() => setFeedback(null)}
+        className="mb-4"
+      />
 
       {/* Summary Stats */}
       <div className="row g-3 mb-4">
@@ -544,8 +543,7 @@ export default function ManageTemplatesPage() {
                 {loading ? (
                   <tr>
                     <td colSpan="7" className="text-center py-5">
-                      <div className="spinner-border text-primary spinner-border-sm me-2"></div>
-                      Đang tải danh sách biểu mẫu...
+                      <LoadingSpinner inline size="sm" message="Đang tải danh sách biểu mẫu..." />
                     </td>
                   </tr>
                 ) : filteredTemplates.length === 0 ? (

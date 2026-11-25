@@ -1,87 +1,281 @@
+/* ============================================================
+ * DESIGN SYSTEM TOKENS — phanmemxuatformiso
+ * Stack: Next.js 14 + Bootstrap 5 + Bootstrap Icons
+ * Last updated: 2026-11-25 | REDESIGN-001
+ * ============================================================ */
+
 :root {
-  --primary-color: #1e3a8a;
-  --primary-hover: #1e40af;
-  --secondary-color: #0f766e;
-  --accent-color: #d97706;
-  --bg-light: #f8fafc;
-  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  /* --- Brand colours --- */
+  --color-primary:        #1e3a8a;   /* Navy blue — primary action */
+  --color-primary-hover:  #1e40af;
+  --color-primary-light:  #dbeafe;   /* bg-blue-100 equivalent */
+  --color-secondary:      #0f766e;   /* Teal — secondary actions */
+  --color-accent:         #d97706;   /* Amber — highlights / warnings */
+  --color-accent-light:   #fef3c7;
+
+  /* Semantic status colours */
+  --color-success:        #16a34a;
+  --color-success-bg:     #dcfce7;
+  --color-warning:        #d97706;
+  --color-warning-bg:     #fef3c7;
+  --color-danger:         #dc2626;
+  --color-danger-bg:      #fee2e2;
+  --color-info:           #0284c7;
+  --color-info-bg:        #e0f2fe;
+
+  /* --- Neutrals --- */
+  --color-bg:             #f8fafc;   /* Page background */
+  --color-surface:        #ffffff;   /* Card / modal background */
+  --color-border:         #e2e8f0;
+  --color-border-subtle:  #f1f5f9;
+  --color-text:           #1e293b;   /* Body text */
+  --color-text-muted:     #64748b;
+  --color-text-secondary: #94a3b8;
+
+  /* --- Sidebar --- */
+  --sidebar-bg:           #0f172a;
+  --sidebar-link:         #cbd5e1;
+  --sidebar-link-hover-bg:rgba(255,255,255,0.08);
+  --sidebar-active-bg:    #2563eb;
+  --sidebar-header-color: #64748b;
+
+  /* --- Typography --- */
+  --font-family-base:     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-xs:         0.72rem;   /* 11.5px */
+  --font-size-sm:         0.8rem;    /* 12.8px */
+  --font-size-base:       1rem;      /* 16px */
+  --font-size-label:      0.85rem;   /* table headers, badges */
+  --line-height-base:     1.5;
+
+  /* --- Spacing --- */
+  --space-xs:   0.25rem;   /* 4px  */
+  --space-sm:   0.5rem;    /* 8px  */
+  --space-md:   1rem;      /* 16px */
+  --space-lg:   1.5rem;    /* 24px */
+  --space-xl:   2rem;      /* 32px */
+
+  /* --- Radii --- */
+  --radius-sm:  0.25rem;   /* 4px  */
+  --radius-md:  0.5rem;    /* 8px  */
+  --radius-lg:  0.75rem;   /* 12px */
+  --radius-xl:  1rem;      /* 16px */
+  --radius-pill:9999px;
+
+  /* --- Shadows --- */
+  --shadow-sm:  0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+
+  /* --- Transitions --- */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-base: 0.2s ease-in-out;
+
+  /* Legacy aliases kept for Bootstrap override compatibility */
+  --primary-color:  var(--color-primary);
+  --primary-hover:  var(--color-primary-hover);
+  --secondary-color:var(--color-secondary);
+  --accent-color:   var(--color-accent);
+  --bg-light:       var(--color-bg);
+  --card-shadow:    var(--shadow-md);
 }
 
+/* ============================================================
+ * BASE
+ * ============================================================ */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: var(--bg-light);
-  color: #1e293b;
+  font-family: var(--font-family-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   min-height: 100vh;
+  line-height: var(--line-height-base);
 }
 
-/* Sidebar styling */
+/* Override Bootstrap primary to match brand navy */
+.btn-primary,
+.bg-primary,
+.navbar-dark.bg-primary {
+  --bs-bg-opacity: 1;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+.text-primary { color: var(--color-primary) !important; }
+.border-primary { border-color: var(--color-primary) !important; }
+.btn-outline-primary {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-outline-primary:hover {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* ============================================================
+ * SIDEBAR
+ * ============================================================ */
 .sidebar {
   min-height: calc(100vh - 56px);
-  background-color: #0f172a;
-  color: #94a3b8;
+  background-color: var(--sidebar-bg);
+  color: var(--color-text-secondary);
 }
 
 .sidebar .nav-link {
-  color: #cbd5e1;
+  color: var(--sidebar-link);
   font-weight: 500;
-  padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
-  margin: 0.15rem 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  margin: 0.1rem 0.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  transition: all 0.2s ease-in-out;
+  gap: 0.65rem;
+  transition: all var(--transition-base);
+  font-size: var(--font-size-base);
 }
 
 .sidebar .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sidebar-link-hover-bg);
   color: #ffffff;
 }
 
 .sidebar .nav-link.active {
-  background-color: #2563eb;
+  background-color: var(--sidebar-active-bg);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.35);
 }
 
 .sidebar .nav-header {
-  font-size: 0.72rem;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 700;
-  color: #64748b;
-  padding: 1rem 1rem 0.35rem 1rem;
+  color: var(--sidebar-header-color);
+  padding: 0.9rem 1rem 0.3rem 1rem;
 }
 
-/* Cards & Components */
+/* ============================================================
+ * CARDS & PANELS
+ * ============================================================ */
 .card {
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  box-shadow: var(--card-shadow);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  background-color: var(--color-surface);
 }
 
 .card-header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #f1f5f9;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
   font-weight: 600;
+  padding: 0.85rem 1.25rem;
 }
 
-/* Table styling */
+/* Stats / metric card accent bar pattern */
+.stat-card-primary   { border-left: 4px solid var(--color-primary)   !important; }
+.stat-card-success   { border-left: 4px solid var(--color-success)   !important; }
+.stat-card-warning   { border-left: 4px solid var(--color-warning)   !important; }
+.stat-card-danger    { border-left: 4px solid var(--color-danger)    !important; }
+.stat-card-info      { border-left: 4px solid var(--color-info)      !important; }
+.stat-card-secondary { border-left: 4px solid var(--color-secondary) !important; }
+
+/* ============================================================
+ * PAGE HEADER (standardised)
+ * ============================================================ */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0.75rem;
+}
+.page-header-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.page-header-subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+.page-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+ * TABLES
+ * ============================================================ */
 .table-custom {
   vertical-align: middle;
 }
 
 .table-custom th {
-  background-color: #f8fafc;
+  background-color: var(--color-bg);
   color: #475569;
-  font-size: 0.85rem;
+  font-size: var(--font-size-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
 }
 
-/* Print styling */
+.table-custom td {
+  border-color: var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+/* ============================================================
+ * BADGES (standardised sizes)
+ * ============================================================ */
+.badge-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.03em;
+}
+.badge-status {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+ * UTILITY HELPERS
+ * ============================================================ */
+.hover-shadow {
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+.hover-shadow:hover {
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-1px);
+}
+.transition { transition: all var(--transition-base); }
+
+.fs-7 { font-size: 0.8rem; }   /* Bootstrap 5 doesn't ship fs-7 */
+.fs-8 { font-size: 0.72rem; }
+
+/* Focus rings — WCAG 2.2 AA visible focus */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+ * PRINT
+ * ============================================================ */
 @media print {
   body {
     background-color: #ffffff !important;

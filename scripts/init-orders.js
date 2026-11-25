@@ -11,6 +11,16 @@ async function initOrders() {
   });
 
   try {
+    // Kiểm tra bảng phụ thuộc trước khi tạo FK để báo lỗi rõ ràng nếu chạy sai thứ tự
+    const [usersTable] = await conn.query("SHOW TABLES LIKE 'users'");
+    if (usersTable.length === 0) {
+      throw new Error('Bảng "users" chưa tồn tại. Vui lòng chạy scripts/init-db.js trước.');
+    }
+    const [productsTable] = await conn.query("SHOW TABLES LIKE 'products'");
+    if (productsTable.length === 0) {
+      throw new Error('Bảng "products" chưa tồn tại. Vui lòng chạy scripts/init-products.js trước.');
+    }
+
     // 1. Create orders table
     await conn.query(`
       CREATE TABLE IF NOT EXISTS orders (

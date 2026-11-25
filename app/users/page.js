@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/PageHeader';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -8,6 +10,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
+  const [banner, setBanner] = useState(null);
+  const [modalError, setModalError] = useState(null);
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,6 +68,7 @@ export default function UsersPage() {
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
+    setModalError(null);
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
@@ -72,7 +77,7 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Tạo người dùng mới thành công!');
+        setBanner({ type: 'success', message: 'Tạo người dùng mới thành công!' });
         setShowAddModal(false);
         setNewUser({
           username: '',
@@ -86,16 +91,17 @@ export default function UsersPage() {
         });
         fetchUsers();
       } else {
-        alert(data.message || 'Lỗi tạo người dùng');
+        setModalError(data.message || 'Lỗi tạo người dùng');
       }
     } catch (err) {
-      alert('Lỗi kết nối: ' + err.message);
+      setModalError('Lỗi kết nối: ' + err.message);
     }
   };
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     if (!currentUser) return;
+    setModalError(null);
     try {
       const res = await fetch('/api/users', {
         method: 'PUT',
@@ -104,14 +110,14 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Cập nhật người dùng thành công!');
+        setBanner({ type: 'success', message: 'Cập nhật người dùng thành công!' });
         setShowEditModal(false);
         fetchUsers();
       } else {
-        alert(data.message || 'Lỗi cập nhật');
+        setModalError(data.message || 'Lỗi cập nhật');
       }
     } catch (err) {
-      alert('Lỗi kết nối: ' + err.message);
+      setModalError('Lỗi kết nối: ' + err.message);
     }
   };
 
@@ -121,19 +127,20 @@ export default function UsersPage() {
       const res = await fetch(`/api/users?id=${user.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        alert('Đã xóa người dùng thành công');
+        setBanner({ type: 'success', message: 'Đã xóa người dùng thành công' });
         fetchUsers();
       } else {
-        alert(data.message || 'Lỗi xóa người dùng');
+        setBanner({ type: 'danger', message: data.message || 'Lỗi xóa người dùng' });
       }
     } catch (err) {
-      alert('Lỗi kết nối: ' + err.message);
+      setBanner({ type: 'danger', message: 'Lỗi kết nối: ' + err.message });
     }
   };
 
   // Open Permission Modal for a specific user
   const handleOpenPermModal = async (user) => {
     setCurrentUser(user);
+    setModalError(null);
     setShowPermModal(true);
     setLoadingPerms(true);
     try {
@@ -161,6 +168,7 @@ export default function UsersPage() {
   const handleSaveUserPermissions = async () => {
     if (!currentUser) return;
     setSavingPerms(true);
+    setModalError(null);
     try {
       const res = await fetch(`/api/users/${currentUser.id}/permissions`, {
         method: 'PUT',
@@ -169,13 +177,13 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Đã cập nhật phân quyền module cho người dùng thành công!');
+        setBanner({ type: 'success', message: 'Đã cập nhật phân quyền module cho người dùng thành công!' });
         setShowPermModal(false);
       } else {
-        alert(data.message || 'Lỗi khi lưu phân quyền');
+        setModalError(data.message || 'Lỗi khi lưu phân quyền');
       }
     } catch (err) {
-      alert('Lỗi kết nối: ' + err.message);
+      setModalError('Lỗi kết nối: ' + err.message);
     } finally {
       setSavingPerms(false);
     }
@@ -193,23 +201,30 @@ export default function UsersPage() {
   return (
     <div>
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-people me-2"></i>Quản Lý Người Dùng & Phân Quyền Module
-          </h3>
-          <p className="text-muted mb-0">
-            Quản trị danh sách nhân sự, vai trò hệ thống và phân quyền truy cập chi tiết vào từng module chức năng.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn btn-primary d-flex align-items-center gap-1 shadow-sm"
-          onClick={() => setShowAddModal(true)}
-        >
-          <i className="bi bi-person-plus-fill"></i> Thêm Người Dùng Mới
-        </button>
-      </div>
+      <PageHeader
+        icon="bi-people"
+        title="Quản Lý Người Dùng & Phân Quyền Module"
+        subtitle="Quản trị danh sách nhân sự, vai trò hệ thống và phân quyền truy cập chi tiết vào từng module chức năng."
+        actions={
+          <button
+            type="button"
+            className="btn btn-primary d-flex align-items-center gap-1 shadow-sm"
+            onClick={() => {
+              setModalError(null);
+              setShowAddModal(true);
+            }}
+          >
+            <i className="bi bi-person-plus-fill" aria-hidden="true"></i> Thêm Người Dùng Mới
+          </button>
+        }
+      />
+
+      <AlertBanner
+        type={banner?.type}
+        message={banner?.message}
+        onClose={() => setBanner(null)}
+        className="mb-4"
+      />
 
       {/* Filter and Search Bar */}
       <div className="card shadow-sm mb-4">
@@ -217,7 +232,9 @@ export default function UsersPage() {
           <div className="row g-3 align-items-center">
             <div className="col-12 col-md-6">
               <div className="input-group">
-                <span className="input-group-text bg-white"><i className="bi bi-search text-muted"></i></span>
+                <span className="input-group-text bg-white">
+                  <i className="bi bi-search text-muted" aria-hidden="true"></i>
+                </span>
                 <input
                   type="text"
                   className="form-control"
@@ -323,18 +340,20 @@ export default function UsersPage() {
                             onClick={() => handleOpenPermModal(u)}
                             title="Phân quyền module riêng cho người dùng này"
                           >
-                            <i className="bi bi-shield-check me-1"></i> Quyền Module
+                            <i className="bi bi-shield-check me-1" aria-hidden="true"></i> Quyền Module
                           </button>
                           <button
                             type="button"
                             className="btn btn-outline-secondary"
                             onClick={() => {
+                              setModalError(null);
                               setCurrentUser(u);
                               setShowEditModal(true);
                             }}
                             title="Sửa thông tin"
+                            aria-label={`Sửa thông tin ${u.full_name}`}
                           >
-                            <i className="bi bi-pencil"></i>
+                            <i className="bi bi-pencil" aria-hidden="true"></i>
                           </button>
                           {u.username !== 'admin' && (
                             <button
@@ -342,8 +361,9 @@ export default function UsersPage() {
                               className="btn btn-outline-danger"
                               onClick={() => handleDeleteUser(u)}
                               title="Xóa người dùng"
+                              aria-label={`Xóa người dùng ${u.full_name}`}
                             >
-                              <i className="bi bi-trash"></i>
+                              <i className="bi bi-trash" aria-hidden="true"></i>
                             </button>
                           )}
                         </div>
@@ -376,6 +396,7 @@ export default function UsersPage() {
               </div>
 
               <div className="modal-body p-4">
+                <AlertBanner type="danger" message={modalError} onClose={() => setModalError(null)} className="mb-3" />
                 {loadingPerms ? (
                   <div className="text-center py-5">
                     <div className="spinner-border text-primary" role="status"></div>
@@ -467,12 +488,13 @@ export default function UsersPage() {
               <form onSubmit={handleCreateUser}>
                 <div className="modal-header bg-primary text-white">
                   <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
-                    <i className="bi bi-person-plus-fill"></i>
+                    <i className="bi bi-person-plus-fill" aria-hidden="true"></i>
                     Thêm Người Dùng Mới
                   </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setShowAddModal(false)}></button>
+                  <button type="button" className="btn-close btn-close-white" aria-label="Đóng" onClick={() => setShowAddModal(false)}></button>
                 </div>
                 <div className="modal-body p-4">
+                  <AlertBanner type="danger" message={modalError} onClose={() => setModalError(null)} className="mb-3" />
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Tên đăng nhập <span className="text-danger">*</span></label>
                     <input
@@ -569,9 +591,10 @@ export default function UsersPage() {
               <form onSubmit={handleUpdateUser}>
                 <div className="modal-header bg-dark text-white">
                   <h5 className="modal-title fw-bold">Cập Nhật Người Dùng: @{currentUser.username}</h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setShowEditModal(false)}></button>
+                  <button type="button" className="btn-close btn-close-white" aria-label="Đóng" onClick={() => setShowEditModal(false)}></button>
                 </div>
                 <div className="modal-body p-4">
+                  <AlertBanner type="danger" message={modalError} onClose={() => setModalError(null)} className="mb-3" />
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Họ và tên</label>
                     <input

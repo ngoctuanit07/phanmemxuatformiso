@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "platform": "unknown",
+  "item": "unknown",
+  "release": "unknown",
+  "decision": "NO-GO",
+  "status": "unverified",
+  "gates": {
+    "account_eligibility": "unverified",
+    "rejection_status": "unverified",
+    "differentiation": "unverified",
+    "security": "unverified",
+    "clean_install": "unverified",
+    "redistribution_rights": "unverified",
+    "docs": "unverified",
+    "demo": "unverified",
+    "packaging": "unverified"
+  },
+  "evidence": [],
+  "notes": "A gate status alone is not proof. Supply paths, commands, timestamps and official URLs."
+}

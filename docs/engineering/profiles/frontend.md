@@ -1,0 +1,3 @@
+# frontend engineering profile
+Detect React/Vue/Next/Blade or other actual stack. Never rely on frontend guards as authorization; server validates every mutation. Avoid unsafe HTML and URLs; contextual encoding, CSRF/token handling according to auth model, no secrets in client bundle. Handle loading/empty/error/conflict states, prevent duplicate submissions with server idempotency where needed. Preserve accessibility and design system; test keyboard, focus, responsive layouts, and permission-sensitive navigation. Use configured lint/typecheck/build/component/E2E tests. Verify API contract compatibility and no sensitive fields in client state/logs.
+These are internal engineering controls, not claims of marketplace-specific mandatory framework patterns.

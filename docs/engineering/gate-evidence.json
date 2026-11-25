@@ -1,0 +1,84 @@
+{
+  "task_id": "",
+  "mode": "FEATURE",
+  "checks": [
+    {
+      "id": "scope",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "access",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "validation",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "integrity",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "errors",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "security",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "architecture",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "quality",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "tests",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "reliability",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "ui",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "marketplace",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    },
+    {
+      "id": "continuity",
+      "status": "unverified",
+      "evidence": "",
+      "reason": ""
+    }
+  ]
+}

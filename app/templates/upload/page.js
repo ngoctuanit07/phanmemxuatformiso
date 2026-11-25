@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function UploadTemplatePage() {
   const router = useRouter();
@@ -168,27 +170,22 @@ export default function UploadTemplatePage() {
   return (
     <div className="container-fluid p-0">
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-cloud-arrow-up me-2"></i>Nạp Biểu Mẫu Mới (.docx / .pdf)
-          </h3>
-          <p className="text-muted mb-0">
+      <PageHeader
+        icon="bi-cloud-arrow-up"
+        title="Nạp Biểu Mẫu Mới (.docx / .pdf)"
+        subtitle={
+          <>
             Tải lên file mẫu Word có sẵn (chứa các thẻ <code>{'{ten_truong}'}</code>) hoặc file PDF. Hệ thống sẽ tự động quét các trường cần điền.
-          </p>
-        </div>
-        <Link href="/templates" className="btn btn-outline-secondary">
-          <i className="bi bi-arrow-left me-1"></i> Quay lại kho mẫu
-        </Link>
-      </div>
+          </>
+        }
+        actions={
+          <Link href="/templates" className="btn btn-outline-secondary">
+            <i className="bi bi-arrow-left me-1" aria-hidden="true"></i> Quay lại kho mẫu
+          </Link>
+        }
+      />
 
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          <i className="bi bi-exclamation-triangle-fill me-2"></i>
-          {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
-        </div>
-      )}
+      <AlertBanner type="danger" message={error} onClose={() => setError(null)} className="mb-4" />
 
       {message && (
         <div className="alert alert-success alert-dismissible fade show" role="alert">

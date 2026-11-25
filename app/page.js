@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import StatsCard from '@/components/StatsCard';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -22,118 +24,84 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-speedometer2 me-2"></i>Bảng Điều Khiển Hệ Thống
-          </h3>
-          <p className="text-muted mb-0">
-            Hệ thống nạp template Word/PDF, nhập dữ liệu biểu mẫu, lưu trữ cơ sở dữ liệu và in ấn ra máy in local.
-          </p>
-        </div>
-        <div className="d-flex gap-2 mt-2 mt-md-0">
-          <Link href="/products" className="btn btn-outline-secondary d-flex align-items-center gap-1">
-            <i className="bi bi-box-seam"></i> Kho Sản Phẩm
-          </Link>
-          <Link href="/templates/upload" className="btn btn-outline-primary d-flex align-items-center gap-1">
-            <i className="bi bi-cloud-arrow-up"></i> Nạp Mẫu Word / PDF
-          </Link>
-          <Link href="/fill" className="btn btn-primary d-flex align-items-center gap-1">
-            <i className="bi bi-pencil-square"></i> Nhập Form Mới
-          </Link>
-        </div>
-      </div>
+      {/* Page Header — standardised component */}
+      <PageHeader
+        icon="bi-speedometer2"
+        title="Bảng Điều Khiển Hệ Thống"
+        subtitle="Hệ thống nạp template Word/PDF, nhập dữ liệu biểu mẫu, lưu trữ cơ sở dữ liệu và in ấn ra máy in local."
+        actions={
+          <>
+            <Link href="/products" className="btn btn-outline-secondary d-flex align-items-center gap-1">
+              <i className="bi bi-box-seam" aria-hidden="true"></i> Kho Sản Phẩm
+            </Link>
+            <Link href="/templates/upload" className="btn btn-outline-primary d-flex align-items-center gap-1">
+              <i className="bi bi-cloud-arrow-up" aria-hidden="true"></i> Nạp Mẫu Word / PDF
+            </Link>
+            <Link href="/fill" className="btn btn-primary d-flex align-items-center gap-1">
+              <i className="bi bi-pencil-square" aria-hidden="true"></i> Nhập Form Mới
+            </Link>
+          </>
+        }
+      />
 
-      {/* Metrics Cards */}
+      {/* Metrics Cards — standardised StatsCard */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-xl">
-          <div className="card h-100 border-primary border-opacity-25 bg-white shadow-sm">
-            <div className="card-body d-flex align-items-center justify-content-between p-3">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold fs-7">Biểu Mẫu Sẵn Sàng</span>
-                <h4 className="fw-bold my-1 text-primary">
-                  {loading ? '...' : (data?.stats?.templates || 0)}
-                </h4>
-                <small className="text-success"><i className="bi bi-file-earmark-word me-1"></i>Word & PDF</small>
-              </div>
-              <div className="p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
-                <i className="bi bi-collection fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Biểu Mẫu Sẵn Sàng"
+            value={loading ? null : (data?.stats?.templates || 0)}
+            icon="bi-collection"
+            variant="primary"
+            subtext="Word & PDF"
+            subtextIcon="bi-file-earmark-word"
+            loading={loading}
+          />
         </div>
-
         <div className="col-12 col-sm-6 col-xl">
-          <Link href="/records" className="text-decoration-none">
-            <div className="card h-100 border-success border-opacity-25 bg-white shadow-sm hover-shadow transition">
-              <div className="card-body d-flex align-items-center justify-content-between p-3">
-                <div>
-                  <span className="text-muted text-uppercase fw-semibold fs-7">Hồ Sơ Đã Lưu CSDL</span>
-                  <h4 className="fw-bold my-1 text-success">
-                    {loading ? '...' : (data?.stats?.records || 0)}
-                  </h4>
-                  <small className="text-muted"><i className="bi bi-database-check me-1"></i>Xem & In lại &rarr;</small>
-                </div>
-                <div className="p-3 bg-success bg-opacity-10 text-success rounded-circle">
-                  <i className="bi bi-file-earmark-check fs-4"></i>
-                </div>
-              </div>
-            </div>
-          </Link>
+          <StatsCard
+            label="Hồ Sơ Đã Lưu CSDL"
+            value={loading ? null : (data?.stats?.records || 0)}
+            icon="bi-file-earmark-check"
+            variant="success"
+            subtext="Xem & In lại →"
+            subtextIcon="bi-database-check"
+            loading={loading}
+            href="/records"
+          />
         </div>
-
         <div className="col-12 col-sm-6 col-xl">
-          <Link href="/products" className="text-decoration-none">
-            <div className="card h-100 border-secondary border-opacity-25 bg-white shadow-sm hover-shadow transition">
-              <div className="card-body d-flex align-items-center justify-content-between p-3">
-                <div>
-                  <span className="text-muted text-uppercase fw-semibold fs-7">Kho Hàng Hóa</span>
-                  <h4 className="fw-bold my-1 text-dark">
-                    {loading ? '...' : (data?.stats?.products || 0)}
-                  </h4>
-                  <small className="text-primary"><i className="bi bi-box-seam me-1"></i>Mã code & Tên SP</small>
-                </div>
-                <div className="p-3 bg-dark bg-opacity-10 text-dark rounded-circle">
-                  <i className="bi bi-boxes fs-4"></i>
-                </div>
-              </div>
-            </div>
-          </Link>
+          <StatsCard
+            label="Kho Hàng Hóa"
+            value={loading ? null : (data?.stats?.products || 0)}
+            icon="bi-boxes"
+            variant="secondary"
+            subtext="Mã code & Tên SP"
+            subtextIcon="bi-box-seam"
+            loading={loading}
+            href="/products"
+          />
         </div>
-
         <div className="col-12 col-sm-6 col-xl">
-          <div className="card h-100 border-warning border-opacity-25 bg-white shadow-sm">
-            <div className="card-body d-flex align-items-center justify-content-between p-3">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold fs-7">Lượt In Máy Local</span>
-                <h4 className="fw-bold my-1 text-warning">
-                  {loading ? '...' : (data?.stats?.prints || 0)}
-                </h4>
-                <small className="text-muted"><i className="bi bi-printer me-1"></i>Máy in vật lý</small>
-              </div>
-              <div className="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
-                <i className="bi bi-printer fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Lượt In Máy Local"
+            value={loading ? null : (data?.stats?.prints || 0)}
+            icon="bi-printer"
+            variant="warning"
+            subtext="Máy in vật lý"
+            subtextIcon="bi-printer"
+            loading={loading}
+          />
         </div>
-
         <div className="col-12 col-sm-6 col-xl">
-          <div className="card h-100 border-info border-opacity-25 bg-white shadow-sm">
-            <div className="card-body d-flex align-items-center justify-content-between p-3">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold fs-7">Người Dùng</span>
-                <h4 className="fw-bold my-1 text-info">
-                  {loading ? '...' : (data?.stats?.users || 0)}
-                </h4>
-                <small className="text-muted"><i className="bi bi-shield-check me-1"></i>Phân quyền RBAC</small>
-              </div>
-              <div className="p-3 bg-info bg-opacity-10 text-info rounded-circle">
-                <i className="bi bi-people fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Người Dùng"
+            value={loading ? null : (data?.stats?.users || 0)}
+            icon="bi-people"
+            variant="info"
+            subtext="Phân quyền RBAC"
+            subtextIcon="bi-shield-check"
+            loading={loading}
+          />
         </div>
       </div>
 

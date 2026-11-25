@@ -2,6 +2,12 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import StatsCard from '@/components/StatsCard';
+import AlertBanner from '@/components/AlertBanner';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function RecordsManagementPage() {
   const [records, setRecords] = useState([]);
@@ -15,6 +21,8 @@ export default function RecordsManagementPage() {
     latest_record_at: null
   });
   const [loading, setLoading] = useState(true);
+  const [confirmState, setConfirmState] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   // Filters
   const [selectedTemplateTab, setSelectedTemplateTab] = useState('all');
@@ -131,14 +139,14 @@ export default function RecordsManagementPage() {
     }
   };
 
-  // Delete a single record
-  const handleDeleteRecord = async (record) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ "${record.title}" [${record.code}] khỏi cơ sở dữ liệu?`)) return;
+  // Delete a single record (via ConfirmModal)
+  const executeDeleteRecord = async (record) => {
+    setConfirmLoading(true);
     try {
       const res = await fetch(`/api/records/${record.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        setAlertMsg({ type: 'success', text: `✔ Đã xóa hồ sơ ${record.code} thành công!` });
+        setAlertMsg({ type: 'success', text: `Đã xóa hồ sơ ${record.code} thành công!` });
         setRecords(prev => prev.filter(r => r.id !== record.id));
         setSelectedIds(prev => prev.filter(id => id !== record.id));
       } else {
@@ -146,7 +154,18 @@ export default function RecordsManagementPage() {
       }
     } catch (err) {
       setAlertMsg({ type: 'danger', text: 'Lỗi kết nối: ' + err.message });
+    } finally {
+      setConfirmLoading(false);
+      setConfirmState(null);
     }
+  };
+
+  const handleDeleteRecord = (record) => {
+    setConfirmState({
+      title: 'Xác nhận xóa hồ sơ',
+      message: `Bạn có chắc chắn muốn xóa hồ sơ "${record.title}" [${record.code}] khỏi cơ sở dữ liệu?`,
+      onConfirm: () => executeDeleteRecord(record),
+    });
   };
 
   // Batch selection handlers
@@ -164,12 +183,9 @@ export default function RecordsManagementPage() {
     );
   };
 
-  // Batch delete selected records
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return;
-    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} hồ sơ đã chọn khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`)) {
-      return;
-    }
+  // Batch delete selected records (via ConfirmModal)
+  const executeBatchDelete = async () => {
+    setConfirmLoading(true);
     setBatchDeleting(true);
     try {
       const res = await fetch('/api/records', {
@@ -179,7 +195,7 @@ export default function RecordsManagementPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setAlertMsg({ type: 'success', text: `✔ ${data.message}` });
+        setAlertMsg({ type: 'success', text: data.message });
         setSelectedIds([]);
         fetchRecords(selectedTemplateTab);
       } else {
@@ -189,13 +205,24 @@ export default function RecordsManagementPage() {
       setAlertMsg({ type: 'danger', text: 'Lỗi kết nối: ' + err.message });
     } finally {
       setBatchDeleting(false);
+      setConfirmLoading(false);
+      setConfirmState(null);
     }
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    setConfirmState({
+      title: `Xác nhận xóa ${selectedIds.length} hồ sơ`,
+      message: `Bạn có chắc chắn muốn xóa ${selectedIds.length} hồ sơ đã chọn khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`,
+      onConfirm: executeBatchDelete,
+    });
   };
 
   // Export records table to Excel-compatible CSV with UTF-8 BOM
   const handleExportCsv = () => {
     if (records.length === 0) {
-      alert('Không có dữ liệu để xuất file CSV.');
+      setAlertMsg({ type: 'warning', text: 'Không có dữ liệu để xuất file CSV.' });
       return;
     }
 
@@ -273,114 +300,87 @@ export default function RecordsManagementPage() {
       />
 
       {/* Main Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom">
-        <div>
-          <div className="d-flex align-items-center gap-2 mb-1">
-            <span className="badge bg-primary text-white font-monospace px-2 py-1">MODULE QUẢN LÝ DỮ LIỆU</span>
-            <span className="badge bg-success-subtle text-success border border-success-subtle">
-              <i className="bi bi-database me-1"></i>MySQL Storage
-            </span>
-          </div>
-          <h2 className="fw-bold mb-1 text-primary d-flex align-items-center gap-2">
-            <i className="bi bi-file-earmark-spreadsheet-fill text-warning"></i>
-            Quản Lý Dữ Liệu Template Đã Nhập & In Lại File
-          </h2>
-          <p className="text-muted mb-0">
-            Toàn bộ các biểu mẫu đã thực hiện nhập liệu và lưu trữ trong CSDL. Bạn có thể tra cứu, chỉnh sửa, nhân bản và gửi lệnh in lại trực tiếp ra máy in local bất kỳ lúc nào.
-          </p>
-        </div>
-        <div className="d-flex flex-wrap gap-2 mt-2 mt-md-0">
-          <button
-            type="button"
-            className="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm"
-            onClick={() => fetchRecords(selectedTemplateTab)}
-            title="Tải lại danh sách"
-          >
-            <i className="bi bi-arrow-clockwise"></i> Tải Lại
-          </button>
-          <button
-            type="button"
-            className="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm"
-            onClick={handleExportCsv}
-            title="Xuất bảng dữ liệu ra file Excel / CSV UTF-8"
-          >
-            <i className="bi bi-file-earmark-excel"></i> Xuất Excel (CSV)
-          </button>
-          <Link href="/fill" className="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
-            <i className="bi bi-plus-circle-fill"></i>
-            <span>Nhập Liệu Mới Vào Form</span>
-          </Link>
-        </div>
+      <div className="d-flex align-items-center gap-2 mb-2">
+        <span className="badge bg-primary text-white font-monospace px-2 py-1">MODULE QUẢN LÝ DỮ LIỆU</span>
+        <span className="badge bg-success-subtle text-success border border-success-subtle">
+          <i className="bi bi-database me-1" aria-hidden="true"></i>MySQL Storage
+        </span>
       </div>
+      <PageHeader
+        icon="bi-file-earmark-spreadsheet-fill text-warning"
+        title="Quản Lý Dữ Liệu Template Đã Nhập & In Lại File"
+        subtitle="Toàn bộ các biểu mẫu đã thực hiện nhập liệu và lưu trữ trong CSDL. Bạn có thể tra cứu, chỉnh sửa, nhân bản và gửi lệnh in lại trực tiếp ra máy in local bất kỳ lúc nào."
+        className="mb-3"
+        actions={
+          <>
+            <button
+              type="button"
+              className="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm"
+              onClick={() => fetchRecords(selectedTemplateTab)}
+              title="Tải lại danh sách"
+            >
+              <i className="bi bi-arrow-clockwise" aria-hidden="true"></i> Tải Lại
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm"
+              onClick={handleExportCsv}
+              title="Xuất bảng dữ liệu ra file Excel / CSV UTF-8"
+            >
+              <i className="bi bi-file-earmark-excel" aria-hidden="true"></i> Xuất Excel (CSV)
+            </button>
+            <Link href="/fill" className="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+              <i className="bi bi-plus-circle-fill" aria-hidden="true"></i>
+              <span>Nhập Liệu Mới Vào Form</span>
+            </Link>
+          </>
+        }
+      />
 
       {/* Alert Banner */}
-      {alertMsg && (
-        <div className={`alert alert-${alertMsg.type} alert-dismissible fade show shadow-sm`} role="alert">
-          <div className="d-flex align-items-center gap-2">
-            <i className={`bi ${alertMsg.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} fs-5`}></i>
-            <div>{alertMsg.text}</div>
-          </div>
-          <button type="button" className="btn-close" onClick={() => setAlertMsg(null)}></button>
-        </div>
-      )}
+      <AlertBanner
+        type={alertMsg?.type}
+        message={alertMsg?.text}
+        onClose={() => setAlertMsg(null)}
+        className="mb-4"
+      />
 
       {/* KPI & Summary Stat Cards */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-xl-3">
-          <div className="card h-100 border-primary border-opacity-25 bg-white shadow-sm">
-            <div className="card-body p-3 d-flex align-items-center justify-content-between">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold" style={{ fontSize: '0.75rem' }}>
-                  Tổng Hồ Sơ Đã Nhập
-                </span>
-                <h3 className="fw-bold my-1 text-primary">{summary.total_records || records.length}</h3>
-                <small className="text-muted">
-                  <i className="bi bi-check2-circle text-success me-1"></i>Đã lưu trong CSDL
-                </small>
-              </div>
-              <div className="p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
-                <i className="bi bi-file-earmark-check-fill fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Tổng Hồ Sơ Đã Nhập"
+            value={summary.total_records || records.length}
+            icon="bi-file-earmark-check-fill"
+            variant="primary"
+            subtext="Đã lưu trong CSDL"
+            subtextIcon="bi-check2-circle text-success"
+            loading={loading}
+          />
         </div>
 
         <div className="col-12 col-sm-6 col-xl-3">
-          <div className="card h-100 border-warning border-opacity-25 bg-white shadow-sm">
-            <div className="card-body p-3 d-flex align-items-center justify-content-between">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold" style={{ fontSize: '0.75rem' }}>
-                  Tổng Lượt In Lại Local
-                </span>
-                <h3 className="fw-bold my-1 text-warning">{summary.total_prints || 0}</h3>
-                <small className="text-muted">
-                  <i className="bi bi-printer-fill text-warning me-1"></i>Xuất lệnh in vật lý
-                </small>
-              </div>
-              <div className="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
-                <i className="bi bi-printer-fill fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Tổng Lượt In Lại Local"
+            value={summary.total_prints || 0}
+            icon="bi-printer-fill"
+            variant="warning"
+            subtext="Xuất lệnh in vật lý"
+            subtextIcon="bi-printer-fill text-warning"
+            loading={loading}
+          />
         </div>
 
         <div className="col-12 col-sm-6 col-xl-3">
-          <div className="card h-100 border-success border-opacity-25 bg-white shadow-sm">
-            <div className="card-body p-3 d-flex align-items-center justify-content-between">
-              <div>
-                <span className="text-muted text-uppercase fw-semibold" style={{ fontSize: '0.75rem' }}>
-                  Biểu Mẫu Đã Phát Sinh
-                </span>
-                <h3 className="fw-bold my-1 text-success">{templateStats.length}</h3>
-                <small className="text-muted">
-                  <i className="bi bi-collection text-success me-1"></i>Mẫu template có dữ liệu
-                </small>
-              </div>
-              <div className="p-3 bg-success bg-opacity-10 text-success rounded-circle">
-                <i className="bi bi-folder-check fs-4"></i>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            label="Biểu Mẫu Đã Phát Sinh"
+            value={templateStats.length}
+            icon="bi-folder-check"
+            variant="success"
+            subtext="Mẫu template có dữ liệu"
+            subtextIcon="bi-collection text-success"
+            loading={loading}
+          />
         </div>
 
         <div className="col-12 col-sm-6 col-xl-3">
@@ -597,21 +597,22 @@ export default function RecordsManagementPage() {
                 {loading ? (
                   <tr>
                     <td colSpan="7" className="text-center py-5">
-                      <div className="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
-                      <span className="text-muted">Đang tải danh sách dữ liệu hồ sơ từ MySQL...</span>
+                      <LoadingSpinner inline size="sm" message="Đang tải danh sách dữ liệu hồ sơ từ MySQL..." />
                     </td>
                   </tr>
                 ) : records.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-5 text-muted">
-                      <i className="bi bi-inbox fs-1 text-secondary opacity-50 d-block mb-2"></i>
-                      <div className="fw-semibold text-dark mb-1">Chưa có dữ liệu hồ sơ nào phù hợp với bộ lọc</div>
-                      <p className="text-muted small mb-3">
-                        Bạn có thể chọn một biểu mẫu và nhập dữ liệu để lưu vào cơ sở dữ liệu.
-                      </p>
-                      <Link href="/fill" className="btn btn-sm btn-primary shadow-sm">
-                        <i className="bi bi-pencil-square me-1"></i> Điền và lưu biểu mẫu mới
-                      </Link>
+                    <td colSpan="7" className="p-0">
+                      <EmptyState
+                        icon="bi-inbox"
+                        title="Chưa có dữ liệu hồ sơ nào phù hợp với bộ lọc"
+                        description="Bạn có thể chọn một biểu mẫu và nhập dữ liệu để lưu vào cơ sở dữ liệu."
+                        action={
+                          <Link href="/fill" className="btn btn-sm btn-primary shadow-sm">
+                            <i className="bi bi-pencil-square me-1" aria-hidden="true"></i> Điền và lưu biểu mẫu mới
+                          </Link>
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -928,6 +929,17 @@ export default function RecordsManagementPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        show={!!confirmState}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmLabel="Xóa"
+        variant="danger"
+        loading={confirmLoading}
+        onConfirm={confirmState?.onConfirm}
+        onCancel={() => !confirmLoading && setConfirmState(null)}
+      />
     </div>
   );
 }

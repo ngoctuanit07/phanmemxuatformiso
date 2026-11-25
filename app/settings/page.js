@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/PageHeader';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -13,7 +15,7 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [banner, setBanner] = useState(null);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -30,7 +32,7 @@ export default function SettingsPage() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setBanner(null);
 
     try {
       const res = await fetch('/api/settings', {
@@ -40,12 +42,12 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage('✔ Đã lưu cấu hình hệ thống thành công!');
+        setBanner({ type: 'success', message: 'Đã lưu cấu hình hệ thống thành công!' });
       } else {
-        alert(data.message || 'Lỗi lưu cài đặt');
+        setBanner({ type: 'danger', message: data.message || 'Lỗi lưu cài đặt' });
       }
     } catch (err) {
-      alert('Lỗi kết nối: ' + err.message);
+      setBanner({ type: 'danger', message: 'Lỗi kết nối: ' + err.message });
     } finally {
       setSaving(false);
     }
@@ -54,24 +56,18 @@ export default function SettingsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
-        <div>
-          <h3 className="fw-bold mb-1 text-primary">
-            <i className="bi bi-gear me-2"></i>Cài Đặt Hệ Thống & Thiết Lập In Ấn
-          </h3>
-          <p className="text-muted mb-0">
-            Cấu hình thông tin cơ quan, máy in local mặc định, khổ giấy và tham số vận hành.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon="bi-gear"
+        title="Cài Đặt Hệ Thống & Thiết Lập In Ấn"
+        subtitle="Cấu hình thông tin cơ quan, máy in local mặc định, khổ giấy và tham số vận hành."
+      />
 
-      {message && (
-        <div className="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-          <i className="bi bi-check-circle-fill me-2"></i>
-          {message}
-          <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
-        </div>
-      )}
+      <AlertBanner
+        type={banner?.type}
+        message={banner?.message}
+        onClose={() => setBanner(null)}
+        className="mb-4"
+      />
 
       <form onSubmit={handleSave}>
         <div className="row g-4">

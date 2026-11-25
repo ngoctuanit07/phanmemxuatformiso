@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ISO_TEMPLATE_CODES, isIsoTemplate } from '@/lib/constants';
+import PageHeader from '@/components/PageHeader';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function TemplateList({ type = 'regular' }) {
   const isIso = type === 'iso';
@@ -122,40 +124,30 @@ export default function TemplateList({ type = 'regular' }) {
   return (
     <div>
       {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom">
-        <div>
-          <h3 className={`fw-bold mb-1 ${isIso ? 'text-primary' : 'text-primary'}`}>
-            {isIso ? (
-              <>
-                <i className="bi bi-patch-check-fill text-warning me-2"></i>
-                Danh Sách Template ISO
-              </>
-            ) : (
-              <>
-                <i className="bi bi-collection me-2 text-primary"></i>
-                Danh Sách Template Thường Quy
-              </>
+      <PageHeader
+        icon={isIso ? 'bi-patch-check-fill text-warning' : 'bi-collection'}
+        title={isIso ? 'Danh Sách Template ISO' : 'Danh Sách Template Thường Quy'}
+        subtitle={
+          isIso
+            ? 'Quản lý các biểu mẫu kiểm soát chất lượng đạt chuẩn ISO (FQC-002-02, FQC-003-02, FQC-004-02, FQC-005-02).'
+            : 'Quản lý các biểu mẫu hành chính, đề nghị thanh toán, bàn giao và tài liệu biểu mẫu thường quy.'
+        }
+        className="mb-3"
+        actions={
+          <>
+            {(hasPerm('template.edit') || hasPerm('template.delete')) && (
+              <Link href="/templates/manage" className="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
+                <i className="bi bi-sliders" aria-hidden="true"></i> Quản Lý File Đã Nạp
+              </Link>
             )}
-          </h3>
-          <p className="text-muted mb-0">
-            {isIso
-              ? 'Quản lý các biểu mẫu kiểm soát chất lượng đạt chuẩn ISO (FQC-002-02, FQC-003-02, FQC-004-02, FQC-005-02).'
-              : 'Quản lý các biểu mẫu hành chính, đề nghị thanh toán, bàn giao và tài liệu biểu mẫu thường quy.'}
-          </p>
-        </div>
-        <div className="d-flex flex-wrap gap-2 mt-2 mt-md-0">
-          {(hasPerm('template.edit') || hasPerm('template.delete')) && (
-            <Link href="/templates/manage" className="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
-              <i className="bi bi-sliders"></i> Quản Lý File Đã Nạp
-            </Link>
-          )}
-          {hasPerm('template.create') && (
-            <Link href="/templates/upload" className="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
-              <i className="bi bi-cloud-arrow-up"></i> Nạp Biểu Mẫu Mới (.docx / .pdf)
-            </Link>
-          )}
-        </div>
-      </div>
+            {hasPerm('template.create') && (
+              <Link href="/templates/upload" className="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+                <i className="bi bi-cloud-arrow-up" aria-hidden="true"></i> Nạp Biểu Mẫu Mới (.docx / .pdf)
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {/* Tabs Switcher between Regular and ISO */}
       <div className="mb-4">
@@ -241,14 +233,7 @@ export default function TemplateList({ type = 'regular' }) {
 
       {/* Templates Grid / Cards */}
       {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Đang tải...</span>
-          </div>
-          <div className="text-muted mt-2">
-            Đang tải danh sách biểu mẫu {isIso ? 'ISO' : 'thường quy'}...
-          </div>
-        </div>
+        <LoadingSpinner message={`Đang tải danh sách biểu mẫu ${isIso ? 'ISO' : 'thường quy'}...`} />
       ) : templates.length === 0 ? (
         <div className="card text-center py-5 shadow-sm">
           <div className="card-body">

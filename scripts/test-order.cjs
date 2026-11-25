@@ -69,9 +69,15 @@ async function run() {
   }, cookie);
   console.log('   Kết quả tạo order:', createOrderRes.status, createOrderRes.data.message);
   console.log('   Chi tiết order vừa tạo:', createOrderRes.data.order);
+  if (createOrderRes.status !== 201 || !createOrderRes.data.order) {
+    throw new Error(`Tạo order thất bại (status=${createOrderRes.status}): ${createOrderRes.data.message || 'Unknown error'}`);
+  }
 
   console.log('\n4. Kiểm tra danh sách đơn hàng GET /api/orders...');
   const listRes = await get('/api/orders', cookie);
+  if (listRes.status !== 200 || !Array.isArray(listRes.data.orders)) {
+    throw new Error(`Lấy danh sách đơn hàng thất bại (status=${listRes.status})`);
+  }
   console.log('   Tổng số đơn trong hệ thống:', listRes.data.orders.length);
   const newest = listRes.data.orders[0];
   console.log('   Đơn mới nhất:', {
@@ -85,4 +91,7 @@ async function run() {
   console.log('\n✔ TẤT CẢ CÁC BƯỚC ĐỀU THÀNH CÔNG VÀ CHÍNH XÁC!');
 }
 
-run().catch(console.error);
+run().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

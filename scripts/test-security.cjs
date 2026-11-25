@@ -66,4 +66,7 @@ async function verifySecurity() {
   console.log('\n✔ TẤT CẢ 8 BÀI KIỂM THỬ BẢO MẬT ĐỀU ĐẠT CHUẨN 100%!');
 }
 
-verifySecurity().catch(console.error);
+verifySecurity().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

@@ -42,7 +42,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm py-2">
+    <nav className="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm py-2" style={{ backgroundColor: 'var(--color-primary)' }}>
       <div className="container-fluid px-3">
         <Link href="/" className="navbar-brand d-flex align-items-center gap-2 fw-bold text-white fs-5">
           <i className="bi bi-file-earmark-word-fill text-warning fs-4"></i>

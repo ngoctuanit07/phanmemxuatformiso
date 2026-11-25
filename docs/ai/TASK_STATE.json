@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.0",
+  "project": "phanmemxuatformiso (Next.js 14, MySQL)",
+  "active_task_id": null,
+  "tasks": [
+    {
+      "id": "BUGFIX-001",
+      "title": "Fix: Bảng user_permissions bị thiếu gây lỗi đăng nhập",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "root_cause": "Bảng user_permissions không được tạo trong scripts/init-db.js, nhưng được query trong app/api/auth/login/route.js (line 103-108) và app/api/users/[id]/permissions/route.js",
+      "error_code": "ER_NO_SUCH_TABLE (1146)",
+      "completed_steps": [
+        "Xác định root cause: thiếu CREATE TABLE user_permissions trong init-db.js",
+        "Thêm CREATE TABLE user_permissions vào scripts/init-db.js (sau role_permissions, trước audit_logs)",
+        "Tạo migration script: scripts/migrate-add-user-permissions.js",
+        "Chạy migration thành công trên DB đang hoạt động",
+        "Thêm regression test: scripts/test-user-permissions-schema.js (8/8 PASS)",
+        "Cập nhật package.json: thêm db:migrate:user-permissions và test:schema scripts"
+      ],
+      "touched_files": [
+        "scripts/init-db.js",
+        "scripts/migrate-add-user-permissions.js",
+        "scripts/test-user-permissions-schema.js",
+        "package.json"
+      ],
+      "test_results": "node scripts/test-user-permissions-schema.js => 8 PASS, 0 FAIL",
+      "next_action": "Không cần thêm hành động. Server có thể login bình thường."
+    },
+    {
+      "id": "BUGFIX-002",
+      "title": "Fix: migrate-department-no.js dùng ESM import gây MODULE_TYPELESS_PACKAGE_JSON warning và exit 1",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "root_cause": "scripts/migrate-department-no.js dùng 'import { query } from ../lib/db.js' (ESM syntax) trong khi package.json không khai báo 'type: module'. Node v20 phát hiện ESM syntax, re-parse script, in warning ra stderr và shell báo exit 1.",
+      "error_code": "MODULE_TYPELESS_PACKAGE_JSON warning + stderr exit 1",
+      "completed_steps": [
+        "Chạy 3 scripts để ghi nhận lỗi thực tế",
+        "Xác định root cause: ESM import từ lib/db.js trong CJS project",
+        "Rewrite migrate-department-no.js: thay import bằng require('mysql2/promise'), dùng connection.execute() trực tiếp, thêm try/finally để đóng connection an toàn",
+        "Xác nhận: node scripts/migrate-department-no.js => exit 0, không còn warning",
+        "Tạo regression test: scripts/test-scripts-regression.js (11/11 PASS)",
+        "Cập nhật package.json: thêm db:migrate:dept-no, db:seed:fqc, test:scripts"
+      ],
+      "touched_files": [
+        "scripts/migrate-department-no.js",
+        "scripts/test-scripts-regression.js",
+        "package.json"
+      ],
+      "test_results": "node scripts/test-scripts-regression.js => 11 PASS, 0 FAIL",
+      "next_action": "Không cần thêm hành động. Cả 3 scripts chạy sạch exit 0."
+    },
+    {
+      "id": "REDESIGN-001",
+      "title": "Chuẩn hóa Design System tokens, PageHeader, StatsCard và Dashboard",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "completed_steps": [
+        "Mở rộng CSS custom properties trong app/globals.css (brand, semantic, neutrals, sidebar, typography, spacing, radii, shadows, focus-visible)",
+        "Tạo components/PageHeader.js và components/StatsCard.js",
+        "Refactor app/page.js (Dashboard) dùng PageHeader và StatsCard",
+        "Cập nhật components/Navbar.js dùng CSS variable --color-primary",
+        "Khởi tạo docs/design/* (DESIGN_SYSTEM, UI_AUDIT, UI_ROADMAP, COMPONENT_MATRIX, DESIGN_RESEARCH, VISUAL_QA)"
+      ],
+      "touched_files": [
+        "app/globals.css",
+        "app/page.js",
+        "components/Navbar.js",
+        "components/PageHeader.js",
+        "components/StatsCard.js",
+        "docs/design/DESIGN_SYSTEM.md",
+        "docs/design/UI_AUDIT.md",
+        "docs/design/UI_ROADMAP.md",
+        "docs/design/COMPONENT_MATRIX.md",
+        "docs/design/DESIGN_RESEARCH.md",
+        "docs/design/VISUAL_QA.md"
+      ],
+      "test_results": "npx next build => exit 0, Compiled successfully, 21/21 static pages (live browser visual QA NOT_RUN)",
+      "next_action": "Chuyển sang REDESIGN-002"
+    },
+    {
+      "id": "REDESIGN-002",
+      "title": "Chuẩn hóa màn hình quản trị Users & Roles (PageHeader, AlertBanner, a11y)",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "completed_steps": [
+        "Tạo components/AlertBanner.js thay thế native alert()",
+        "Refactor app/roles/page.js: dùng PageHeader, AlertBanner, aria-hidden cho icon, .fs-8 thay inline style",
+        "Refactor app/users/page.js: dùng PageHeader, AlertBanner (banner trang + modalError trong 3 modal), aria-hidden/aria-label cho icon",
+        "Xác minh 0 lời gọi alert() còn lại và build thành công",
+        "Cập nhật docs/design/UI_ROADMAP.md, COMPONENT_MATRIX.md, VISUAL_QA.md"
+      ],
+      "touched_files": [
+        "components/AlertBanner.js",
+        "app/roles/page.js",
+        "app/users/page.js",
+        "docs/design/UI_ROADMAP.md",
+        "docs/design/COMPONENT_MATRIX.md",
+        "docs/design/VISUAL_QA.md"
+      ],
+      "test_results": "Select-String '\\balert\\(' => 0 matches; npx next build => exit 0, Compiled successfully, 21/21 static pages (live browser QA NOT_RUN)",
+      "next_action": "Tiếp tục REDESIGN-003 (Templates pages: regular, iso, manage, upload + fill)"
+    },
+    {
+      "id": "REDESIGN-003",
+      "title": "Chuẩn hóa màn hình Templates (regular, iso, manage, upload) & Fill với PageHeader, AlertBanner, LoadingSpinner",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "completed_steps": [
+        "Tạo components/LoadingSpinner.js (block & inline, role=status, aria-hidden)",
+        "Refactor components/TemplateList.js: dùng PageHeader & LoadingSpinner",
+        "Refactor app/templates/upload/page.js: dùng PageHeader & AlertBanner",
+        "Refactor app/templates/manage/page.js: dùng PageHeader, AlertBanner & LoadingSpinner (inline)",
+        "Refactor app/fill/page.js & app/fill/[templateId]/page.js: dùng PageHeader & LoadingSpinner",
+        "Xác minh build thành công và cập nhật UI_ROADMAP.md, COMPONENT_MATRIX.md, VISUAL_QA.md"
+      ],
+      "touched_files": [
+        "components/LoadingSpinner.js",
+        "components/TemplateList.js",
+        "app/templates/upload/page.js",
+        "app/templates/manage/page.js",
+        "app/fill/page.js",
+        "app/fill/[templateId]/page.js",
+        "docs/design/UI_ROADMAP.md",
+        "docs/design/COMPONENT_MATRIX.md",
+        "docs/design/VISUAL_QA.md"
+      ],
+      "test_results": "npx next build => exit 0, Compiled successfully, 21/21 static pages (live browser QA NOT_RUN)",
+      "next_action": "Tiếp tục REDESIGN-004 (Settings + Records + Print-logs: PageHeader, StatsCard, EmptyState, ConfirmModal)"
+    },
+    {
+      "id": "REDESIGN-004",
+      "title": "Chuẩn hóa Settings, Records & Print-logs với PageHeader, StatsCard, EmptyState và ConfirmModal",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "completed_steps": [
+        "Tạo components/EmptyState.js và components/ConfirmModal.js",
+        "Refactor app/settings/page.js: dùng PageHeader & AlertBanner (thay 2 alert())",
+        "Refactor app/print-logs/page.js: dùng PageHeader, LoadingSpinner (inline) & EmptyState",
+        "Refactor app/records/page.js: dùng PageHeader, StatsCard (3 KPI cards), AlertBanner, LoadingSpinner, EmptyState & ConfirmModal (thay 2 confirm() xóa đơn lẻ/hàng loạt và 1 alert() xuất CSV)",
+        "Xác minh 0 alert()/confirm() còn lại và build thành công",
+        "Cập nhật docs/design/UI_ROADMAP.md, COMPONENT_MATRIX.md, VISUAL_QA.md"
+      ],
+      "touched_files": [
+        "components/EmptyState.js",
+        "components/ConfirmModal.js",
+        "app/settings/page.js",
+        "app/print-logs/page.js",
+        "app/records/page.js",
+        "docs/design/UI_ROADMAP.md",
+        "docs/design/COMPONENT_MATRIX.md",
+        "docs/design/VISUAL_QA.md"
+      ],
+      "test_results": "Select-String '\\b(alert|confirm)\\(' => 0 matches; npx next build => exit 0, Compiled successfully, 21/21 static pages (live browser QA NOT_RUN)",
+      "next_action": "Tiếp tục REDESIGN-005 (Mobile sidebar drawer trên <768px, keyboard-navigable)"
+    },
+    {
+      "id": "BUGFIX-003",
+      "title": "Fix: Lỗi khi chạy toàn bộ scripts/ (verify-templates.js ESM warning, init-orders.js FK ordering, test-order/test-security nuốt exit code)",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "root_cause": "1) scripts/verify-templates.js dùng ESM import trong CJS project gây MODULE_TYPELESS_PACKAGE_JSON warning; 2) scripts/init-orders.js tạo FK tới products(id) nên lỗi ER_CANT_CREATE_TABLE (errno 150) khi chạy trước init-products.js; 3) scripts/test-order.cjs và scripts/test-security.cjs dùng .catch(console.error) làm mất exit code != 0 khi fail.",
+      "completed_steps": [
+        "Chạy toàn bộ 13 scripts trong scripts/ để ghi nhận lỗi thực tế",
+        "Chuyển scripts/verify-templates.js sang CJS require('mysql2/promise') với try/finally đóng connection",
+        "Thêm kiểm tra bảng phụ thuộc (users, products) vào scripts/init-orders.js để báo lỗi rõ ràng nếu chạy sai thứ tự",
+        "Sửa scripts/test-order.cjs và scripts/test-security.cjs để kiểm tra status/payload và gọi process.exit(1) khi lỗi",
+        "Mở rộng regression test trong scripts/test-scripts-regression.js (16/16 PASS)",
+        "Chạy lại toàn bộ 13/13 scripts (TOTAL_FAILED:0)"
+      ],
+      "touched_files": [
+        "scripts/verify-templates.js",
+        "scripts/init-orders.js",
+        "scripts/test-order.cjs",
+        "scripts/test-security.cjs",
+        "scripts/test-scripts-regression.js"
+      ],
+      "test_results": "13/13 scripts exit 0; node scripts/test-scripts-regression.js => 16 PASS, 0 FAIL; node scripts/test-user-permissions-schema.js => 8 PASS, 0 FAIL",
+      "next_action": "Tiếp tục REDESIGN-005 (Mobile sidebar drawer trên <768px, keyboard-navigable)"
+    },
+    {
+      "id": "BUGFIX-004",
+      "title": "Fix: Bỏ button lưu CSDL dư thừa trong Thao Tác & Kết Nối Máy In Local (ISO & Thường quy)",
+      "status": "done",
+      "created": "2026-11-25",
+      "completed": "2026-11-25",
+      "root_cause": "Cả module template ISO (/templates/iso) và thường quy (/templates/regular) đều dùng chung trang điền biểu mẫu app/fill/page.js. Trong panel 'Thao Tác & Kết Nối Máy In Local', ngoài nút chính 'LƯU & IN RA MÁY IN LOCAL' (gọi handleSaveAndPrint(false) -> saveFormRecord(false) rồi in local), còn có thêm nút phụ 'Lưu Dữ Liệu Vào Cơ Sở Dữ Liệu' / 'Lưu Cập Nhật Vào CSDL' (gọi saveFormRecord(false) độc lập) bị dư.",
+      "completed_steps": [
+        "Truy dấu dependency bằng Graphify & Select-String: xác định app/fill/page.js là trang dùng chung cho cả ISO và thường quy",
+        "Xóa button phụ 'Lưu Dữ Liệu Vào Cơ Sở Dữ Liệu' / 'Lưu Cập Nhật Vào CSDL' trong app/fill/page.js",
+        "Giữ nguyên luồng handleSaveAndPrint(false): lưu dữ liệu vào CSDL MySQL qua saveFormRecord rồi kích hoạt in ra máy in local",
+        "Thêm regression test scripts/test-fill-save-print-regression.js (5/5 PASS) và script npm test:fill-print trong package.json",
+        "Chạy npm run build (next build) => exit 0, 21/21 static pages"
+      ],
+      "touched_files": [
+        "app/fill/page.js",
+        "scripts/test-fill-save-print-regression.js",
+        "package.json"
+      ],
+      "test_results": "node scripts/test-fill-save-print-regression.js => 5 PASS, 0 FAIL; npm run build => exit 0 (21/21 static pages)",
+      "next_action": "Tiếp tục REDESIGN-005 (Mobile sidebar drawer trên <768px, keyboard-navigable)"
+    }
+  ],
+  "last_updated_utc": "2026-11-25T03:25:30Z",
+  "notes": "DB có đủ 11 bảng. REDESIGN-001..004 đã hoàn thành và build pass (21/21). Live browser Visual QA chưa chạy."
+}
